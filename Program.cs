@@ -1,47 +1,89 @@
+using System.Text;
 using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Http.HttpResults;
+using Grpc.Net.Client;
+using Maichess.MatchManager.V1;
+using MaichessMatchMakerService.Queue;
+using MaichessMatchMakerService.Rest;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
 
-var builder = WebApplication.CreateSlimBuilder(args);
+DotNetEnv.Env.Load();
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Redis
+string redisUrl = builder.Configuration.GetConnectionString("Redis")
+    ?? throw new InvalidOperationException("ConnectionStrings:Redis is not configured");
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisUrl));
+builder.Services.AddSingleton<QueueRepository>();
+
+// gRPC client — Match Manager
+string matchManagerUrl = builder.Configuration["MatchManager:Url"]
+    ?? throw new InvalidOperationException("MatchManager:Url is not configured");
+var matchManagerChannel = GrpcChannel.ForAddress(matchManagerUrl);
+builder.Services.AddSingleton(new Matches.MatchesClient(matchManagerChannel));
+
+// Background matching worker
+builder.Services.AddHostedService<MatchingWorker>();
+
+// JWT auth
+string jwtKey = builder.Configuration["Jwt:Key"]
+    ?? throw new InvalidOperationException("Jwt:Key is not configured");
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                if (context.Request.Cookies.TryGetValue("access_token", out string? token))
+                {
+                    context.Token = token;
+                }
+
+                return Task.CompletedTask;
+            },
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
+    options.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.SnakeCaseLower;
 });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-Todo[] sampleTodos =
-[
-    new(1, "Walk the dog"),
-    new(2, "Do the dishes", DateOnly.FromDateTime(DateTime.Now)),
-    new(3, "Do the laundry", DateOnly.FromDateTime(DateTime.Now.AddDays(1))),
-    new(4, "Clean the bathroom"),
-    new(5, "Clean the car", DateOnly.FromDateTime(DateTime.Now.AddDays(2)))
-];
-
-var todosApi = app.MapGroup("/todos");
-todosApi.MapGet("/", () => sampleTodos)
-    .WithName("GetTodos");
-
-todosApi.MapGet("/{id}", Results<Ok<Todo>, NotFound> (int id) =>
-        sampleTodos.FirstOrDefault(a => a.Id == id) is { } todo
-            ? TypedResults.Ok(todo)
-            : TypedResults.NotFound())
-    .WithName("GetTodoById");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapQueueEndpoints();
 
 app.Run();
 
-public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplete = false);
-
-[JsonSerializable(typeof(Todo[]))]
-internal partial class AppJsonSerializerContext : JsonSerializerContext
+[JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
+[JsonSerializable(typeof(QueueRequest))]
+[JsonSerializable(typeof(QueueResponse))]
+[JsonSerializable(typeof(QueueStatusResponse))]
+[JsonSerializable(typeof(ErrorResponse))]
+internal sealed partial class AppJsonSerializerContext : JsonSerializerContext
 {
 }

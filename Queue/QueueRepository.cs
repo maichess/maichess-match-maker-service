@@ -1,0 +1,111 @@
+using StackExchange.Redis;
+
+namespace MaichessMatchMakerService.Queue;
+
+internal sealed class QueueRepository(IConnectionMultiplexer redis)
+{
+    private IDatabase Db => redis.GetDatabase();
+
+    public async Task EnqueueAsync(string queueToken, string userId, string timeControl)
+    {
+        double score = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+        ITransaction tx = Db.CreateTransaction();
+        _ = tx.HashSetAsync(
+            EntryKey(queueToken),
+            [
+                new HashEntry("user_id", userId),
+                new HashEntry("time_control", timeControl),
+                new HashEntry("status", "waiting"),
+            ]);
+        _ = tx.SortedSetAddAsync(QueueKey(timeControl), queueToken, score);
+        _ = tx.StringSetAsync(UserKey(userId), queueToken);
+        await tx.ExecuteAsync();
+    }
+
+    // Bot matches are immediately resolved — no sorted-set entry needed.
+    public async Task EnqueueBotMatchAsync(string queueToken, string userId, string timeControl, string matchId)
+    {
+        string key = EntryKey(queueToken);
+        await Db.HashSetAsync(
+            key,
+            [
+                new HashEntry("user_id", userId),
+                new HashEntry("time_control", timeControl),
+                new HashEntry("status", "matched"),
+                new HashEntry("match_id", matchId),
+            ]);
+        await Db.KeyExpireAsync(key, TimeSpan.FromMinutes(10));
+    }
+
+    public async Task<QueueEntry?> GetEntryAsync(string queueToken)
+    {
+        HashEntry[] fields = await Db.HashGetAllAsync(EntryKey(queueToken));
+        return fields.Length == 0 ? null : ParseEntry(queueToken, fields);
+    }
+
+    public async Task RemoveAsync(string queueToken, string userId, string timeControl)
+    {
+        // No-op if already matched — client may still need to read the match_id.
+        RedisValue status = await Db.HashGetAsync(EntryKey(queueToken), "status");
+        if (status == "matched")
+        {
+            return;
+        }
+
+        ITransaction tx = Db.CreateTransaction();
+        _ = tx.KeyDeleteAsync(EntryKey(queueToken));
+        _ = tx.SortedSetRemoveAsync(QueueKey(timeControl), queueToken);
+        _ = tx.KeyDeleteAsync(UserKey(userId));
+        await tx.ExecuteAsync();
+    }
+
+    public async Task MarkMatchedAsync(string queueToken, string userId, string matchId)
+    {
+        ITransaction tx = Db.CreateTransaction();
+        _ = tx.HashSetAsync(
+            EntryKey(queueToken),
+            [
+                new HashEntry("status", "matched"),
+                new HashEntry("match_id", matchId),
+            ]);
+        _ = tx.KeyExpireAsync(EntryKey(queueToken), TimeSpan.FromMinutes(10));
+        _ = tx.KeyDeleteAsync(UserKey(userId));
+        await tx.ExecuteAsync();
+    }
+
+    public async Task<string?> GetUserQueueTokenAsync(string userId)
+    {
+        RedisValue value = await Db.StringGetAsync(UserKey(userId));
+        return value.HasValue ? (string?)value : null;
+    }
+
+    public async Task<long> GetQueueCountAsync(string timeControl) =>
+        await Db.SortedSetLengthAsync(QueueKey(timeControl));
+
+    public async Task<string[]> DequeueOldestPairAsync(string timeControl)
+    {
+        SortedSetEntry[] entries = await Db.SortedSetPopAsync(QueueKey(timeControl), count: 2);
+        return entries.Select(e => (string)e.Element!).ToArray();
+    }
+
+    private static string EntryKey(string queueToken) => $"queue_entry:{queueToken}";
+
+    private static string QueueKey(string timeControl) => $"queue:{timeControl}";
+
+    private static string UserKey(string userId) => $"queue_user:{userId}";
+
+    private static QueueEntry ParseEntry(string queueToken, HashEntry[] fields)
+    {
+        Dictionary<string, string?> dict = fields.ToDictionary(
+            f => (string)f.Name!,
+            f => (string?)f.Value);
+
+        return new QueueEntry(
+            queueToken,
+            dict.GetValueOrDefault("user_id") ?? string.Empty,
+            dict.GetValueOrDefault("time_control") ?? string.Empty,
+            dict.GetValueOrDefault("status") == "matched" ? QueueStatus.Matched : QueueStatus.Waiting,
+            dict.GetValueOrDefault("match_id"));
+    }
+}

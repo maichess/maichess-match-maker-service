@@ -18,7 +18,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 string redisUrl = builder.Configuration.GetConnectionString("Redis")
     ?? throw new InvalidOperationException("ConnectionStrings:Redis is not configured");
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisUrl));
-builder.Services.AddSingleton<QueueRepository>();
+builder.Services.AddSingleton<IQueueRepository, QueueRepository>();
 
 // gRPC client — Match Manager
 string matchManagerUrl = builder.Configuration["MatchManager:Url"]
@@ -37,7 +37,9 @@ string socketServiceUrl = builder.Configuration["Services:SocketService"]
 builder.Services.AddSingleton(new SocketSvc.SocketClient(GrpcChannel.ForAddress(socketServiceUrl)));
 builder.Services.AddSingleton<SocketNotifier>();
 
-// Background matching worker
+// Queue service and background matching worker
+builder.Services.AddSingleton<QueueingService>();
+builder.Services.AddSingleton<MatchingService>();
 builder.Services.AddHostedService<MatchingWorker>();
 
 // JWT auth

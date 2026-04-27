@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using StackExchange.Redis;
 
 namespace MaichessMatchMakerService.Queue;
 
-internal sealed class QueueRepository(IConnectionMultiplexer redis)
+[ExcludeFromCodeCoverage]
+internal sealed class QueueRepository(IConnectionMultiplexer redis) : IQueueRepository
 {
     private IDatabase Db => redis.GetDatabase();
 

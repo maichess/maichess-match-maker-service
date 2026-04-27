@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace MaichessMatchMakerService.Rest;
 
+[ExcludeFromCodeCoverage]
 internal sealed record ErrorResponse(string Error);

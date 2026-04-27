@@ -1,16 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Claims;
 using Maichess.Engine.V1;
-using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Queue;
 using Microsoft.AspNetCore.Mvc;
-using MatchManagerTimeControl = Maichess.MatchManager.V1.TimeControl;
 
 namespace MaichessMatchMakerService.Rest;
 
+[ExcludeFromCodeCoverage]
 internal static class QueueEndpoints
 {
-    private static readonly HashSet<string> ValidTimeControls = ["bullet", "blitz", "rapid", "classical"];
-
     internal static IEndpointRouteBuilder MapQueueEndpoints(this IEndpointRouteBuilder routes)
     {
         routes.MapGet("/bots", GetBots);
@@ -31,9 +29,7 @@ internal static class QueueEndpoints
     private static async Task<IResult> Enqueue(
         [FromBody] QueueRequest body,
         ClaimsPrincipal principal,
-        QueueRepository queue,
-        Matches.MatchesClient matchesClient,
-        SocketNotifier socketNotifier,
+        QueueingService service,
         CancellationToken ct)
     {
         if (!TryGetUserId(principal, out string userId))
@@ -41,70 +37,36 @@ internal static class QueueEndpoints
             return Results.Unauthorized();
         }
 
-        if (!ValidTimeControls.Contains(body.TimeControl))
+        EnqueueResult result = await service.EnqueueAsync(
+            userId, body.TimeControl, body.Opponent.Type, body.Opponent.BotId, ct);
+
+        return result switch
         {
-            return Results.BadRequest(new ErrorResponse("invalid time_control"));
-        }
-
-        if (body.Opponent.Type is not "human" and not "bot")
-        {
-            return Results.BadRequest(new ErrorResponse("opponent.type must be 'human' or 'bot'"));
-        }
-
-        if (body.Opponent.Type == "bot" && string.IsNullOrWhiteSpace(body.Opponent.BotId))
-        {
-            return Results.BadRequest(new ErrorResponse("opponent.bot_id is required for bot matches"));
-        }
-
-        string? existingToken = await queue.GetUserQueueTokenAsync(userId);
-        if (existingToken is not null)
-        {
-            return Results.Conflict(new ErrorResponse("already in queue"));
-        }
-
-        string queueToken = Guid.NewGuid().ToString();
-
-        if (body.Opponent.Type == "bot")
-        {
-            var request = new CreateMatchRequest
-            {
-                White = new Player { UserId = userId },
-                Black = new Player { BotId = body.Opponent.BotId },
-                TimeControl = MapTimeControl(body.TimeControl),
-            };
-
-            CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);
-            string matchId = response.Match.Id;
-            await queue.EnqueueBotMatchAsync(queueToken, userId, body.TimeControl, matchId);
-            socketNotifier.NotifyMatched(userId, matchId);
-        }
-        else
-        {
-            await queue.EnqueueAsync(queueToken, userId, body.TimeControl);
-        }
-
-        return Results.Created($"/queue/{queueToken}", new QueueResponse(queueToken));
+            EnqueueResult.Success ok => Results.Created($"/queue/{ok.QueueToken}", new QueueResponse(ok.QueueToken)),
+            EnqueueResult.InvalidInput err => Results.BadRequest(new ErrorResponse(err.Message)),
+            EnqueueResult.AlreadyQueued => Results.Conflict(new ErrorResponse("already in queue")),
+            _ => Results.Problem(),
+        };
     }
 
     private static async Task<IResult> Dequeue(
         string queueToken,
         ClaimsPrincipal principal,
-        QueueRepository queue)
+        QueueingService service)
     {
         if (!TryGetUserId(principal, out string userId))
         {
             return Results.Unauthorized();
         }
 
-        QueueEntry? entry = await queue.GetEntryAsync(queueToken);
+        DequeueResult result = await service.DequeueAsync(queueToken, userId);
 
-        if (entry is null || entry.UserId != userId)
+        return result switch
         {
-            return Results.NotFound();
-        }
-
-        await queue.RemoveAsync(queueToken, userId, entry.TimeControl);
-        return Results.NoContent();
+            DequeueResult.Success => Results.NoContent(),
+            DequeueResult.NotFound => Results.NotFound(),
+            _ => Results.Problem(),
+        };
     }
 
     private static bool TryGetUserId(ClaimsPrincipal principal, out string userId)
@@ -113,13 +75,4 @@ internal static class QueueEndpoints
         userId = value ?? string.Empty;
         return value is not null;
     }
-
-    private static MatchManagerTimeControl MapTimeControl(string value) => value switch
-    {
-        "bullet" => MatchManagerTimeControl.Bullet,
-        "blitz" => MatchManagerTimeControl.Blitz,
-        "rapid" => MatchManagerTimeControl.Rapid,
-        "classical" => MatchManagerTimeControl.Classical,
-        _ => MatchManagerTimeControl.Unspecified,
-    };
 }

@@ -1,0 +1,85 @@
+using Grpc.Core;
+using Maichess.MatchManager.V1;
+using MaichessMatchMakerService.Queue;
+using NSubstitute;
+
+namespace MaichessMatchMakerService.Tests.Support;
+
+internal sealed class MatchingServiceContext
+{
+    internal IQueueRepository Queue { get; } = Substitute.For<IQueueRepository>();
+
+    internal Matches.MatchesClient MatchesClient { get; } = Substitute.For<Matches.MatchesClient>();
+
+    internal FakeLogger<MatchingService> Logger { get; } = new FakeLogger<MatchingService>();
+
+    internal MatchingService MatchingService { get; }
+
+    internal string? CurrentTimeControl { get; set; }
+
+    internal CreateMatchRequest? LastCreateMatchRequest { get; set; }
+
+    internal Exception? LastException { get; set; }
+
+    internal CancellationTokenSource CancellationSource { get; } = new CancellationTokenSource();
+
+    internal MatchingServiceContext()
+    {
+        MatchingService = new MatchingService(Queue, MatchesClient, Logger);
+
+        Queue.DequeueOldestPairAsync(Arg.Any<string>())
+            .Returns(Task.FromResult(Array.Empty<string>()));
+    }
+
+    internal void SetupQueueCount(string timeControl, long count)
+    {
+        CurrentTimeControl = timeControl;
+        Queue.GetQueueCountAsync(timeControl).Returns(Task.FromResult(count));
+    }
+
+    internal void SetupDequeueTokens(string token1, string token2)
+    {
+        Queue.DequeueOldestPairAsync(CurrentTimeControl!)
+            .Returns(Task.FromResult(new[] { token1, token2 }));
+    }
+
+    internal void SetupDequeueEmpty()
+    {
+        Queue.DequeueOldestPairAsync(CurrentTimeControl!)
+            .Returns(Task.FromResult(Array.Empty<string>()));
+    }
+
+    internal void SetupEntry(string token, string userId)
+    {
+        Queue.GetEntryAsync(token).Returns(Task.FromResult<QueueEntry?>(
+            new QueueEntry(token, userId, CurrentTimeControl ?? "blitz", QueueStatus.Waiting, null)));
+    }
+
+    internal void SetupEntryMissing(string token)
+    {
+        Queue.GetEntryAsync(token).Returns(Task.FromResult<QueueEntry?>(null));
+    }
+
+    internal void SetupMatchManagerSuccess(string matchId)
+    {
+        var response = new CreateMatchResponse { Match = new Match { Id = matchId } };
+        MatchesClient
+            .CreateMatchAsync(
+                Arg.Do<CreateMatchRequest>(r => LastCreateMatchRequest = r),
+                Arg.Any<Metadata>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(GrpcHelper.GrpcCall(response));
+    }
+
+    internal void SetupMatchManagerThrows()
+    {
+        MatchesClient
+            .CreateMatchAsync(
+                Arg.Any<CreateMatchRequest>(),
+                Arg.Any<Metadata>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(GrpcHelper.GrpcCallFailed<CreateMatchResponse>());
+    }
+}

@@ -7,6 +7,8 @@ using MaichessMatchMakerService.Queue;
 using MaichessMatchMakerService.Rest;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using StackExchange.Redis;
 
 using SocketSvc = Socket.V1.Socket;
@@ -73,6 +75,16 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+string otlpEndpoint = Environment.GetEnvironmentVariable("OTEL_EXPORTER_OTLP_ENDPOINT")
+    ?? "http://otel-collector:4317";
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("match-maker-service"))
+    .WithTracing(t => t
+        .AddAspNetCoreInstrumentation()
+        .AddGrpcClientInstrumentation()
+        .AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint)));
 
 builder.Services.ConfigureHttpJsonOptions(options =>
 {

@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
 using Socket.V1;
 
 using SocketSvc = Socket.V1.Socket;
@@ -27,7 +28,7 @@ internal sealed class SocketNotifier(SocketSvc.SocketClient client, ILogger<Sock
                 Payload = payload,
             });
         }
-        catch (Exception ex)
+        catch (RpcException ex)
         {
             logger.LogWarning(ex, "Failed to emit '{Event}' to user {UserId}", @event, userId);
         }

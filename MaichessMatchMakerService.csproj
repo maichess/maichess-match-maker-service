@@ -15,6 +15,21 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Remove="MaichessMatchMakerService.Tests/**" />
+        <EmbeddedResource Remove="MaichessMatchMakerService.Tests/**" />
+        <None Remove="MaichessMatchMakerService.Tests/**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>MaichessMatchMakerService.Tests</_Parameter1>
+        </AssemblyAttribute>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="DotNetEnv" Version="3.1.1" />
         <PackageReference Include="Grpc.Net.Client" Version="2.76.0" />
         <PackageReference Include="Maichess.PlatformProtos" Version="0.2.9" />

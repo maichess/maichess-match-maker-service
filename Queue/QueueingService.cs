@@ -2,7 +2,7 @@ using Maichess.MatchManager.V1;
 
 namespace MaichessMatchMakerService.Queue;
 
-internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesClient matchesClient)
+internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesClient matchesClient, SocketNotifier socketNotifier)
 {
     private static readonly HashSet<string> ValidTimeControls = ["bullet", "blitz", "rapid", "classical"];
 
@@ -42,7 +42,9 @@ internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesCli
             };
 
             CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);
-            await queue.EnqueueBotMatchAsync(queueToken, userId, timeControl, response.Match.Id);
+            string matchId = response.Match.Id;
+            await queue.EnqueueBotMatchAsync(queueToken, userId, timeControl, matchId);
+            socketNotifier.NotifyMatched(userId, matchId);
         }
         else
         {

@@ -1,7 +1,10 @@
 using Grpc.Core;
 using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Queue;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+
+using SocketSvc = Socket.V1.Socket;
 
 namespace MaichessMatchMakerService.Tests.Support;
 
@@ -10,6 +13,9 @@ internal sealed class MatchingServiceContext
     internal IQueueRepository Queue { get; } = Substitute.For<IQueueRepository>();
 
     internal Matches.MatchesClient MatchesClient { get; } = Substitute.For<Matches.MatchesClient>();
+
+    internal SocketNotifier SocketNotifier { get; } =
+        new SocketNotifier(Substitute.For<SocketSvc.SocketClient>(), NullLogger<SocketNotifier>.Instance);
 
     internal FakeLogger<MatchingService> Logger { get; } = new FakeLogger<MatchingService>();
 
@@ -25,7 +31,7 @@ internal sealed class MatchingServiceContext
 
     internal MatchingServiceContext()
     {
-        MatchingService = new MatchingService(Queue, MatchesClient, Logger);
+        MatchingService = new MatchingService(Queue, MatchesClient, SocketNotifier, Logger);
 
         Queue.DequeueOldestPairAsync(Arg.Any<string>())
             .Returns(Task.FromResult(Array.Empty<string>()));

@@ -6,6 +6,7 @@ namespace MaichessMatchMakerService.Queue;
 internal sealed class MatchingService(
     IQueueRepository queue,
     Matches.MatchesClient matchesClient,
+    SocketNotifier socketNotifier,
     ILogger<MatchingService> logger)
 {
     internal static MatchManagerTimeControl MapTimeControl(string value) => value switch
@@ -57,6 +58,9 @@ internal sealed class MatchingService(
             string matchId = response.Match.Id;
             await queue.MarkMatchedAsync(tokens[0], white.UserId, matchId);
             await queue.MarkMatchedAsync(tokens[1], black.UserId, matchId);
+
+            socketNotifier.NotifyMatched(white.UserId, matchId);
+            socketNotifier.NotifyMatched(black.UserId, matchId);
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {

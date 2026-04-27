@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Maichess.Engine.V1;
 using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Queue;
 using Microsoft.AspNetCore.Mvc;
@@ -12,11 +13,20 @@ internal static class QueueEndpoints
 
     internal static IEndpointRouteBuilder MapQueueEndpoints(this IEndpointRouteBuilder routes)
     {
+        routes.MapGet("/bots", GetBots);
+
         RouteGroupBuilder group = routes.MapGroup("/queue").RequireAuthorization();
         group.MapPost("/", Enqueue);
         group.MapGet("/{queueToken}/status", GetStatus);
         group.MapDelete("/{queueToken}", Dequeue);
         return routes;
+    }
+
+    private static async Task<IResult> GetBots(Bots.BotsClient botsClient, CancellationToken ct)
+    {
+        ListBotsResponse response = await botsClient.ListBotsAsync(new ListBotsRequest(), cancellationToken: ct);
+        IReadOnlyList<BotResponse> bots = [.. response.Bots.Select(b => new BotResponse(b.Id, b.Name, b.Elo))];
+        return Results.Ok(new BotsListResponse(bots));
     }
 
     private static async Task<IResult> Enqueue(

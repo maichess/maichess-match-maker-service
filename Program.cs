@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 using Grpc.Net.Client;
+using Maichess.Engine.V1;
 using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Queue;
 using MaichessMatchMakerService.Rest;
@@ -22,6 +23,11 @@ string matchManagerUrl = builder.Configuration["MatchManager:Url"]
     ?? throw new InvalidOperationException("MatchManager:Url is not configured");
 var matchManagerChannel = GrpcChannel.ForAddress(matchManagerUrl);
 builder.Services.AddSingleton(new Matches.MatchesClient(matchManagerChannel));
+
+// gRPC client — Engine
+string engineUrl = builder.Configuration["Engine:Url"]
+    ?? throw new InvalidOperationException("Engine:Url is not configured");
+builder.Services.AddSingleton(new Bots.BotsClient(GrpcChannel.ForAddress(engineUrl)));
 
 // Background matching worker
 builder.Services.AddHostedService<MatchingWorker>();
@@ -84,6 +90,8 @@ app.Run();
 [JsonSerializable(typeof(QueueResponse))]
 [JsonSerializable(typeof(QueueStatusResponse))]
 [JsonSerializable(typeof(ErrorResponse))]
+[JsonSerializable(typeof(BotResponse))]
+[JsonSerializable(typeof(BotsListResponse))]
 internal sealed partial class AppJsonSerializerContext : JsonSerializerContext
 {
 }

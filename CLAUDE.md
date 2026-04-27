@@ -17,9 +17,6 @@ Implement against these contracts exactly. If a contract cannot be implemented a
 - **gRPC client:** `Grpc.Net.Client` with stubs from `Maichess.PlatformProtos`
 - **JSON:** Use `[JsonSerializable]` source-generation; no runtime reflection
 
-## Contract Deviation
-
-The REST contract specifies `GET /queue/{queue_token}/events` as a Server-Sent Events stream. SSE is **not implemented yet**. Instead, implement `GET /queue/{queue_token}/status` as a simple polling endpoint that returns the current queue entry state. Document this deviation in `CONTRACT_NOTES.md`.
 
 ## Structure
 

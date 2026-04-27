@@ -6,6 +6,7 @@ namespace MaichessMatchMakerService.Queue;
 internal sealed class MatchingWorker(
     QueueRepository queue,
     Matches.MatchesClient matchesClient,
+    SocketNotifier socketNotifier,
     ILogger<MatchingWorker> logger) : BackgroundService
 {
     private static readonly string[] TimeControls = ["bullet", "blitz", "rapid", "classical"];
@@ -74,6 +75,9 @@ internal sealed class MatchingWorker(
             string matchId = response.Match.Id;
             await queue.MarkMatchedAsync(tokens[0], white.UserId, matchId);
             await queue.MarkMatchedAsync(tokens[1], black.UserId, matchId);
+
+            socketNotifier.NotifyMatched(white.UserId, matchId);
+            socketNotifier.NotifyMatched(black.UserId, matchId);
         }
         catch (Exception ex) when (!ct.IsCancellationRequested)
         {

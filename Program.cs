@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 
+using SocketSvc = Socket.V1.Socket;
+
 DotNetEnv.Env.Load();
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +30,12 @@ builder.Services.AddSingleton(new Matches.MatchesClient(matchManagerChannel));
 string engineUrl = builder.Configuration["Engine:Url"]
     ?? throw new InvalidOperationException("Engine:Url is not configured");
 builder.Services.AddSingleton(new Bots.BotsClient(GrpcChannel.ForAddress(engineUrl)));
+
+// gRPC client — Socket service
+string socketServiceUrl = builder.Configuration["Services:SocketService"]
+    ?? throw new InvalidOperationException("Services:SocketService is not configured");
+builder.Services.AddSingleton(new SocketSvc.SocketClient(GrpcChannel.ForAddress(socketServiceUrl)));
+builder.Services.AddSingleton<SocketNotifier>();
 
 // Background matching worker
 builder.Services.AddHostedService<MatchingWorker>();
@@ -88,7 +96,6 @@ app.Run();
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.SnakeCaseLower)]
 [JsonSerializable(typeof(QueueRequest))]
 [JsonSerializable(typeof(QueueResponse))]
-[JsonSerializable(typeof(QueueStatusResponse))]
 [JsonSerializable(typeof(ErrorResponse))]
 [JsonSerializable(typeof(BotResponse))]
 [JsonSerializable(typeof(BotsListResponse))]

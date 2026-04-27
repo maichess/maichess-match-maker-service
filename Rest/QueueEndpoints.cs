@@ -17,7 +17,6 @@ internal static class QueueEndpoints
 
         RouteGroupBuilder group = routes.MapGroup("/queue").RequireAuthorization();
         group.MapPost("/", Enqueue);
-        group.MapGet("/{queueToken}/status", GetStatus);
         group.MapDelete("/{queueToken}", Dequeue);
         return routes;
     }
@@ -34,6 +33,7 @@ internal static class QueueEndpoints
         ClaimsPrincipal principal,
         QueueRepository queue,
         Matches.MatchesClient matchesClient,
+        SocketNotifier socketNotifier,
         CancellationToken ct)
     {
         if (!TryGetUserId(principal, out string userId))
@@ -74,7 +74,9 @@ internal static class QueueEndpoints
             };
 
             CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);
-            await queue.EnqueueBotMatchAsync(queueToken, userId, body.TimeControl, response.Match.Id);
+            string matchId = response.Match.Id;
+            await queue.EnqueueBotMatchAsync(queueToken, userId, body.TimeControl, matchId);
+            socketNotifier.NotifyMatched(userId, matchId);
         }
         else
         {
@@ -82,25 +84,6 @@ internal static class QueueEndpoints
         }
 
         return Results.Created($"/queue/{queueToken}", new QueueResponse(queueToken));
-    }
-
-    private static async Task<IResult> GetStatus(
-        string queueToken,
-        ClaimsPrincipal principal,
-        QueueRepository queue)
-    {
-        if (!TryGetUserId(principal, out string userId))
-        {
-            return Results.Unauthorized();
-        }
-
-        QueueEntry? entry = await queue.GetEntryAsync(queueToken);
-
-        return entry is null || entry.UserId != userId
-            ? Results.NotFound()
-            : Results.Ok(new QueueStatusResponse(
-                entry.Status == QueueStatus.Matched ? "matched" : "waiting",
-                entry.MatchId));
     }
 
     private static async Task<IResult> Dequeue(

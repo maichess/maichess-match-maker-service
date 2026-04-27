@@ -3,4 +3,4 @@ using System.Diagnostics.CodeAnalysis;
 namespace MaichessMatchMakerService.Rest;
 
 [ExcludeFromCodeCoverage]
-internal sealed record QueueResponse(string QueueToken);
+internal sealed record QueueResponse(string QueueToken, string? MatchId = null);

@@ -45,12 +45,10 @@ internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesCli
             string matchId = response.Match.Id;
             await queue.EnqueueBotMatchAsync(queueToken, userId, timeControl, matchId);
             socketNotifier.NotifyMatched(userId, matchId);
-        }
-        else
-        {
-            await queue.EnqueueAsync(queueToken, userId, timeControl);
+            return new EnqueueResult.Success(queueToken, matchId);
         }
 
+        await queue.EnqueueAsync(queueToken, userId, timeControl);
         return new EnqueueResult.Success(queueToken);
     }
 

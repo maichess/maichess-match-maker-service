@@ -42,7 +42,7 @@ internal static class QueueEndpoints
 
         return result switch
         {
-            EnqueueResult.Success ok => Results.Created($"/queue/{ok.QueueToken}", new QueueResponse(ok.QueueToken)),
+            EnqueueResult.Success ok => Results.Created($"/queue/{ok.QueueToken}", new QueueResponse(ok.QueueToken, ok.MatchId)),
             EnqueueResult.InvalidInput err => Results.BadRequest(new ErrorResponse(err.Message)),
             EnqueueResult.AlreadyQueued => Results.Conflict(new ErrorResponse("already in queue")),
             _ => Results.Problem(),

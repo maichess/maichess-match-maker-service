@@ -22,7 +22,7 @@ internal static class QueueEndpoints
     private static async Task<IResult> GetBots(Bots.BotsClient botsClient, CancellationToken ct)
     {
         ListBotsResponse response = await botsClient.ListBotsAsync(new ListBotsRequest(), cancellationToken: ct);
-        IReadOnlyList<BotResponse> bots = [.. response.Bots.Select(b => new BotResponse(b.Id, b.Name, b.Elo))];
+        IReadOnlyList<BotResponse> bots = [.. response.Bots.Select(b => new BotResponse(b.Id, b.Name, b.Elo, b.Description))];
         return Results.Ok(new BotsListResponse(bots));
     }
 

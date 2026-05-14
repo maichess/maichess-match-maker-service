@@ -113,6 +113,10 @@ app.Run();
 [JsonSerializable(typeof(ErrorResponse))]
 [JsonSerializable(typeof(BotResponse))]
 [JsonSerializable(typeof(BotsListResponse))]
+[JsonSerializable(typeof(TimeFormatResponse))]
+[JsonSerializable(typeof(TimeFormatsResponse))]
+[JsonSerializable(typeof(BotMatchRequest))]
+[JsonSerializable(typeof(BotMatchResponse))]
 internal sealed partial class AppJsonSerializerContext : JsonSerializerContext
 {
 }

@@ -5,7 +5,6 @@ using MaichessMatchMakerService.Tests.Support;
 using NSubstitute;
 using Reqnroll;
 using Xunit;
-using MatchManagerTimeControl = Maichess.MatchManager.V1.TimeControl;
 
 namespace MaichessMatchMakerService.Tests.StepDefinitions;
 
@@ -53,12 +52,19 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
 
     // ── When ─────────────────────────────────────────────────────────────────
 
-    [When(@"enqueue is called with userId ""([^""]*)"" timeControl ""([^""]*)"" opponentType ""([^""]*)"" and botId ""([^""]*)""")]
-    public async Task WhenEnqueueIsCalled(string userId, string timeControl, string opponentType, string botId)
+    [When(@"enqueue is called with userId ""([^""]*)"" timeFormatId ""([^""]*)"" opponentType ""([^""]*)"" and botId ""([^""]*)""")]
+    public async Task WhenEnqueueIsCalled(string userId, string timeFormatId, string opponentType, string botId)
     {
         string? nullableBotId = string.IsNullOrEmpty(botId) ? null : botId;
         context.EnqueueResult = await context.Service.EnqueueAsync(
-            userId, timeControl, opponentType, nullableBotId, context.CancellationSource.Token);
+            userId, timeFormatId, opponentType, nullableBotId, context.CancellationSource.Token);
+    }
+
+    [When(@"a bot-vs-bot match is created with white ""([^""]*)"" black ""([^""]*)"" time format ""([^""]*)""")]
+    public async Task WhenBotVsBotMatchIsCreated(string whiteBotId, string blackBotId, string timeFormatId)
+    {
+        context.EnqueueResult = await context.Service.CreateBotVsBotMatchAsync(
+            whiteBotId, blackBotId, timeFormatId, context.CancellationSource.Token);
     }
 
     [When(@"get status is called for token ""([^""]*)"" by user ""([^""]*)""")]
@@ -95,11 +101,18 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
         Assert.NotEmpty(result.QueueToken);
     }
 
-    [Then(@"EnqueueAsync is called for user ""([^""]*)"" with time control ""([^""]*)""")]
-    public async Task ThenEnqueueAsyncIsCalled(string userId, string timeControl)
+    [Then(@"the enqueue result is success with match id ""([^""]*)""")]
+    public void ThenEnqueueResultIsSuccessWithMatchId(string matchId)
+    {
+        var result = Assert.IsType<EnqueueResult.Success>(context.EnqueueResult);
+        Assert.Equal(matchId, result.MatchId);
+    }
+
+    [Then(@"EnqueueAsync is called for user ""([^""]*)"" with time format id ""([^""]*)""")]
+    public async Task ThenEnqueueAsyncIsCalled(string userId, string timeFormatId)
     {
         await context.Queue.Received(1).EnqueueAsync(
-            Arg.Any<string>(), userId, timeControl);
+            Arg.Any<string>(), userId, timeFormatId);
     }
 
     [Then(@"the CreateMatch gRPC request has white userId ""([^""]*)"" and black botId ""([^""]*)""")]
@@ -110,19 +123,29 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
         Assert.Equal(botId, context.LastCreateMatchRequest.Black.BotId);
     }
 
-    [Then(@"EnqueueBotMatchAsync is called for user ""([^""]*)"" with time control ""([^""]*)"" and match ""([^""]*)""")]
-    public async Task ThenEnqueueBotMatchAsyncIsCalled(string userId, string timeControl, string matchId)
+    [Then(@"the CreateMatch gRPC request has white botId ""([^""]*)"" and black botId ""([^""]*)""")]
+    public void ThenGrpcRequestHasBotPlayers(string whiteBotId, string blackBotId)
     {
-        await context.Queue.Received(1).EnqueueBotMatchAsync(
-            Arg.Any<string>(), userId, timeControl, matchId);
+        Assert.NotNull(context.LastCreateMatchRequest);
+        Assert.Equal(whiteBotId, context.LastCreateMatchRequest.White.BotId);
+        Assert.Equal(blackBotId, context.LastCreateMatchRequest.Black.BotId);
     }
 
-    [Then(@"the CreateMatch gRPC request uses time control (.+)")]
-    public void ThenGrpcRequestUsesTimeControl(string expectedEnum)
+    [Then(@"EnqueueBotMatchAsync is called for user ""([^""]*)"" with time format id ""([^""]*)"" and match ""([^""]*)""")]
+    public async Task ThenEnqueueBotMatchAsyncIsCalled(string userId, string timeFormatId, string matchId)
     {
-        MatchManagerTimeControl expected = Enum.Parse<MatchManagerTimeControl>(expectedEnum);
+        await context.Queue.Received(1).EnqueueBotMatchAsync(
+            Arg.Any<string>(), userId, timeFormatId, matchId);
+    }
+
+    [Then(@"the CreateMatch request uses time format id ""([^""]*)"" with base (\d+) and increment (\d+)")]
+    public void ThenGrpcRequestUsesTimeFormat(string id, long baseMs, long incrementMs)
+    {
         Assert.NotNull(context.LastCreateMatchRequest);
-        Assert.Equal(expected, context.LastCreateMatchRequest.TimeControl);
+        TimeFormat tf = context.LastCreateMatchRequest.TimeFormat;
+        Assert.Equal(id, tf.Id);
+        Assert.Equal(baseMs, tf.BaseMs);
+        Assert.Equal(incrementMs, tf.IncrementMs);
     }
 
     [Then(@"the get status result is not found")]

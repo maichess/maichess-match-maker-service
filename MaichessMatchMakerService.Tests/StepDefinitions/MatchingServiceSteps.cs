@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Reqnroll;
 using Xunit;
-using MatchManagerTimeControl = Maichess.MatchManager.V1.TimeControl;
 
 namespace MaichessMatchMakerService.Tests.StepDefinitions;
 
@@ -16,15 +15,15 @@ internal sealed class MatchingServiceSteps(MatchingServiceContext context)
     // ── Given ────────────────────────────────────────────────────────────────
 
     [Given(@"the ""([^""]*)"" queue has fewer than 2 players")]
-    public void GivenQueueHasFewerThan2Players(string timeControl)
+    public void GivenQueueHasFewerThan2Players(string timeFormatId)
     {
-        context.SetupQueueCount(timeControl, 1L);
+        context.SetupQueueCount(timeFormatId, 1L);
     }
 
     [Given(@"the ""([^""]*)"" queue reports 2 or more players")]
-    public void GivenQueueReports2OrMorePlayers(string timeControl)
+    public void GivenQueueReports2OrMorePlayers(string timeFormatId)
     {
-        context.SetupQueueCount(timeControl, 2L);
+        context.SetupQueueCount(timeFormatId, 2L);
     }
 
     [Given(@"the dequeue returns tokens ""([^""]*)"" and ""([^""]*)""")]
@@ -72,12 +71,12 @@ internal sealed class MatchingServiceSteps(MatchingServiceContext context)
     // ── When ─────────────────────────────────────────────────────────────────
 
     [When(@"the matching service processes the ""([^""]*)"" queue")]
-    public async Task WhenMatchingServiceProcessesQueue(string timeControl)
+    public async Task WhenMatchingServiceProcessesQueue(string timeFormatId)
     {
         context.LastException = null;
         try
         {
-            await context.MatchingService.TryMatchAsync(timeControl, context.CancellationSource.Token);
+            await context.MatchingService.TryMatchAsync(timeFormatId, context.CancellationSource.Token);
         }
         catch (Exception ex)
         {
@@ -137,11 +136,13 @@ internal sealed class MatchingServiceSteps(MatchingServiceContext context)
         Assert.IsType<RpcException>(context.LastException);
     }
 
-    [Then(@"the CreateMatch request uses time control (.+)")]
-    public void ThenCreateMatchRequestUsesTimeControl(string expectedEnum)
+    [Then(@"the CreateMatch request uses time format id ""([^""]*)"" with base (\d+) and increment (\d+)")]
+    public void ThenCreateMatchRequestUsesTimeFormat(string id, long baseMs, long incrementMs)
     {
-        MatchManagerTimeControl expected = Enum.Parse<MatchManagerTimeControl>(expectedEnum);
         Assert.NotNull(context.LastCreateMatchRequest);
-        Assert.Equal(expected, context.LastCreateMatchRequest.TimeControl);
+        TimeFormat tf = context.LastCreateMatchRequest.TimeFormat;
+        Assert.Equal(id, tf.Id);
+        Assert.Equal(baseMs, tf.BaseMs);
+        Assert.Equal(incrementMs, tf.IncrementMs);
     }
 }

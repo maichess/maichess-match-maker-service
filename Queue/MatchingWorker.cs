@@ -5,17 +5,15 @@ namespace MaichessMatchMakerService.Queue;
 [ExcludeFromCodeCoverage]
 internal sealed class MatchingWorker(MatchingService service) : BackgroundService
 {
-    private static readonly string[] TimeControls = ["bullet", "blitz", "rapid", "classical"];
-
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(500);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            foreach (string timeControl in TimeControls)
+            foreach (Maichess.MatchManager.V1.TimeFormat preset in TimeFormatRegistry.Presets)
             {
-                await service.TryMatchAsync(timeControl, stoppingToken);
+                await service.TryMatchAsync(preset.Id, stoppingToken);
             }
 
             await Task.Delay(PollInterval, stoppingToken);

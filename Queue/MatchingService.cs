@@ -1,5 +1,4 @@
 using Maichess.MatchManager.V1;
-using MatchManagerTimeControl = Maichess.MatchManager.V1.TimeControl;
 
 namespace MaichessMatchMakerService.Queue;
 
@@ -9,24 +8,15 @@ internal sealed class MatchingService(
     SocketNotifier socketNotifier,
     ILogger<MatchingService> logger)
 {
-    internal static MatchManagerTimeControl MapTimeControl(string value) => value switch
+    internal async Task TryMatchAsync(string timeFormatId, CancellationToken ct)
     {
-        "bullet" => MatchManagerTimeControl.Bullet,
-        "blitz" => MatchManagerTimeControl.Blitz,
-        "rapid" => MatchManagerTimeControl.Rapid,
-        "classical" => MatchManagerTimeControl.Classical,
-        _ => MatchManagerTimeControl.Unspecified,
-    };
-
-    internal async Task TryMatchAsync(string timeControl, CancellationToken ct)
-    {
-        long count = await queue.GetQueueCountAsync(timeControl);
+        long count = await queue.GetQueueCountAsync(timeFormatId);
         if (count < 2)
         {
             return;
         }
 
-        string[] tokens = await queue.DequeueOldestPairAsync(timeControl);
+        string[] tokens = await queue.DequeueOldestPairAsync(timeFormatId);
         if (tokens.Length < 2)
         {
             return;
@@ -50,7 +40,7 @@ internal sealed class MatchingService(
             {
                 White = new Player { UserId = white.UserId },
                 Black = new Player { UserId = black.UserId },
-                TimeControl = MapTimeControl(timeControl),
+                TimeFormat = TimeFormatRegistry.Resolve(timeFormatId),
             };
 
             CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);

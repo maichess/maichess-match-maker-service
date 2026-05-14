@@ -9,6 +9,6 @@ internal enum QueueStatus
 internal sealed record QueueEntry(
     string QueueToken,
     string UserId,
-    string TimeControl,
+    string TimeFormatId,
     QueueStatus Status,
     string? MatchId);

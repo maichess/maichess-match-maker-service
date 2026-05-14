@@ -21,7 +21,7 @@ internal sealed class MatchingServiceContext
 
     internal MatchingService MatchingService { get; }
 
-    internal string? CurrentTimeControl { get; set; }
+    internal string? CurrentTimeFormatId { get; set; }
 
     internal CreateMatchRequest? LastCreateMatchRequest { get; set; }
 
@@ -37,28 +37,28 @@ internal sealed class MatchingServiceContext
             .Returns(Task.FromResult(Array.Empty<string>()));
     }
 
-    internal void SetupQueueCount(string timeControl, long count)
+    internal void SetupQueueCount(string timeFormatId, long count)
     {
-        CurrentTimeControl = timeControl;
-        Queue.GetQueueCountAsync(timeControl).Returns(Task.FromResult(count));
+        CurrentTimeFormatId = timeFormatId;
+        Queue.GetQueueCountAsync(timeFormatId).Returns(Task.FromResult(count));
     }
 
     internal void SetupDequeueTokens(string token1, string token2)
     {
-        Queue.DequeueOldestPairAsync(CurrentTimeControl!)
+        Queue.DequeueOldestPairAsync(CurrentTimeFormatId!)
             .Returns(Task.FromResult(new[] { token1, token2 }));
     }
 
     internal void SetupDequeueEmpty()
     {
-        Queue.DequeueOldestPairAsync(CurrentTimeControl!)
+        Queue.DequeueOldestPairAsync(CurrentTimeFormatId!)
             .Returns(Task.FromResult(Array.Empty<string>()));
     }
 
     internal void SetupEntry(string token, string userId)
     {
         Queue.GetEntryAsync(token).Returns(Task.FromResult<QueueEntry?>(
-            new QueueEntry(token, userId, CurrentTimeControl ?? "blitz", QueueStatus.Waiting, null)));
+            new QueueEntry(token, userId, CurrentTimeFormatId ?? "5+0", QueueStatus.Waiting, null)));
     }
 
     internal void SetupEntryMissing(string token)

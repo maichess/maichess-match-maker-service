@@ -92,14 +92,14 @@ namespace MaichessMatchMakerService.Tests.Features
             await this.TestTearDownAsync();
         }
         
-        [Xunit.SkippableFactAttribute(DisplayName="Invalid time control — returns invalid input")]
+        [Xunit.SkippableFactAttribute(DisplayName="Invalid time format id — returns invalid input")]
         [Xunit.TraitAttribute("FeatureTitle", "QueueingService — queue entry, status, and dequeue logic")]
-        [Xunit.TraitAttribute("Description", "Invalid time control — returns invalid input")]
-        public async System.Threading.Tasks.Task InvalidTimeControlReturnsInvalidInput()
+        [Xunit.TraitAttribute("Description", "Invalid time format id — returns invalid input")]
+        public async System.Threading.Tasks.Task InvalidTimeFormatIdReturnsInvalidInput()
         {
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Invalid time control — returns invalid input", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Invalid time format id — returns invalid input", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 5
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -111,11 +111,11 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 6
-    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeControl \"invalid\" opponentType \"human\"" +
-                        " and botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeFormatId \"invalid\" opponentType \"human" +
+                        "\" and botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 7
-    await testRunner.ThenAsync("the enqueue result is invalid input \"invalid time_control\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("the enqueue result is invalid input \"invalid time_format_id\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -140,8 +140,8 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 10
-    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeControl \"blitz\" opponentType \"alien\" a" +
-                        "nd botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeFormatId \"5+0\" opponentType \"alien\" an" +
+                        "d botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 11
     await testRunner.ThenAsync("the enqueue result is invalid input \"opponent.type must be \'human\' or \'bot\'\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -169,8 +169,8 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 14
-    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeControl \"blitz\" opponentType \"bot\" and" +
-                        " botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeFormatId \"5+0\" opponentType \"bot\" and " +
+                        "botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 15
     await testRunner.ThenAsync("the enqueue result is invalid input \"opponent.bot_id is required for bot matches\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -201,8 +201,8 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.GivenAsync("the user \"user-a\" is already in a queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 19
-    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeControl \"blitz\" opponentType \"human\" a" +
-                        "nd botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeFormatId \"5+0\" opponentType \"human\" an" +
+                        "d botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 20
     await testRunner.ThenAsync("the enqueue result is already queued", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -233,14 +233,14 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.GivenAsync("the user \"user-a\" is not in any queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 26
-    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeControl \"blitz\" opponentType \"human\" a" +
-                        "nd botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeFormatId \"5+0\" opponentType \"human\" an" +
+                        "d botId \"\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 27
     await testRunner.ThenAsync("the enqueue result is success with a queue token", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 28
-    await testRunner.AndAsync("EnqueueAsync is called for user \"user-a\" with time control \"blitz\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+    await testRunner.AndAsync("EnqueueAsync is called for user \"user-a\" with time format id \"5+0\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -271,8 +271,8 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.AndAsync("the match manager creates match \"match-xyz\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 33
-    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeControl \"blitz\" opponentType \"bot\" and" +
-                        " botId \"bot-1\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync(("enqueue is called with userId \"user-a\" timeFormatId \"5+0\" opponentType \"bot\" and " +
+                        "botId \"bot-1\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 34
     await testRunner.ThenAsync("the enqueue result is success with a queue token", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -281,27 +281,29 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.AndAsync("the CreateMatch gRPC request has white userId \"user-a\" and black botId \"bot-1\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 36
-    await testRunner.AndAsync(("EnqueueBotMatchAsync is called for user \"user-a\" with time control \"blitz\" and ma" +
+    await testRunner.AndAsync(("EnqueueBotMatchAsync is called for user \"user-a\" with time format id \"5+0\" and ma" +
                         "tch \"match-xyz\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableTheoryAttribute(DisplayName="Bot match maps time control to correct gRPC enum")]
+        [Xunit.SkippableTheoryAttribute(DisplayName="Bot match propagates the resolved time format to the gRPC request")]
         [Xunit.TraitAttribute("FeatureTitle", "QueueingService — queue entry, status, and dequeue logic")]
-        [Xunit.TraitAttribute("Description", "Bot match maps time control to correct gRPC enum")]
-        [Xunit.InlineDataAttribute("bullet", "Bullet", new string[0])]
-        [Xunit.InlineDataAttribute("blitz", "Blitz", new string[0])]
-        [Xunit.InlineDataAttribute("rapid", "Rapid", new string[0])]
-        [Xunit.InlineDataAttribute("classical", "Classical", new string[0])]
-        public async System.Threading.Tasks.Task BotMatchMapsTimeControlToCorrectGRPCEnum(string timeControl, string expectedEnum, string[] exampleTags)
+        [Xunit.TraitAttribute("Description", "Bot match propagates the resolved time format to the gRPC request")]
+        [Xunit.InlineDataAttribute("1+0", "60000", "0", new string[0])]
+        [Xunit.InlineDataAttribute("3+2", "180000", "2000", new string[0])]
+        [Xunit.InlineDataAttribute("5+0", "300000", "0", new string[0])]
+        [Xunit.InlineDataAttribute("10+5", "600000", "5000", new string[0])]
+        [Xunit.InlineDataAttribute("30+20", "1800000", "20000", new string[0])]
+        public async System.Threading.Tasks.Task BotMatchPropagatesTheResolvedTimeFormatToTheGRPCRequest(string timeFormatId, string baseMs, string incrementMs, string[] exampleTags)
         {
             string[] tagsOfScenario = exampleTags;
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            argumentsOfScenario.Add("timeControl", timeControl);
-            argumentsOfScenario.Add("expectedEnum", expectedEnum);
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Bot match maps time control to correct gRPC enum", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            argumentsOfScenario.Add("timeFormatId", timeFormatId);
+            argumentsOfScenario.Add("baseMs", baseMs);
+            argumentsOfScenario.Add("incrementMs", incrementMs);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Bot match propagates the resolved time format to the gRPC request", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 38
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -319,11 +321,102 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.AndAsync("the match manager creates match \"match-x\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 41
-    await testRunner.WhenAsync(string.Format(("enqueue is called with userId \"user-a\" timeControl \"{0}\" opponentType \"bot\" and b" +
-                            "otId \"bot-1\""), timeControl), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync(string.Format(("enqueue is called with userId \"user-a\" timeFormatId \"{0}\" opponentType \"bot\" and " +
+                            "botId \"bot-1\""), timeFormatId), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 42
-    await testRunner.ThenAsync(string.Format("the CreateMatch gRPC request uses time control {0}", expectedEnum), ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync(string.Format("the CreateMatch request uses time format id \"{0}\" with base {1} and increment {2}", timeFormatId, baseMs, incrementMs), ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Bot-vs-bot match — calls gRPC with two bot players")]
+        [Xunit.TraitAttribute("FeatureTitle", "QueueingService — queue entry, status, and dequeue logic")]
+        [Xunit.TraitAttribute("Description", "Bot-vs-bot match — calls gRPC with two bot players")]
+        public async System.Threading.Tasks.Task Bot_Vs_BotMatchCallsGRPCWithTwoBotPlayers()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Bot-vs-bot match — calls gRPC with two bot players", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 54
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 55
+    await testRunner.GivenAsync("the match manager creates match \"match-bvb\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+#line hidden
+#line 56
+    await testRunner.WhenAsync("a bot-vs-bot match is created with white \"bot-a\" black \"bot-b\" time format \"5+0\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 57
+    await testRunner.ThenAsync("the enqueue result is success with match id \"match-bvb\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+#line 58
+    await testRunner.AndAsync("the CreateMatch gRPC request has white botId \"bot-a\" and black botId \"bot-b\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Bot-vs-bot match — invalid time format id is rejected")]
+        [Xunit.TraitAttribute("FeatureTitle", "QueueingService — queue entry, status, and dequeue logic")]
+        [Xunit.TraitAttribute("Description", "Bot-vs-bot match — invalid time format id is rejected")]
+        public async System.Threading.Tasks.Task Bot_Vs_BotMatchInvalidTimeFormatIdIsRejected()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Bot-vs-bot match — invalid time format id is rejected", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 60
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 61
+    await testRunner.WhenAsync(("a bot-vs-bot match is created with white \"bot-a\" black \"bot-b\" time format \"inval" +
+                        "id\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 62
+    await testRunner.ThenAsync("the enqueue result is invalid input \"invalid time_format_id\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+#line hidden
+            }
+            await this.ScenarioCleanupAsync();
+        }
+        
+        [Xunit.SkippableFactAttribute(DisplayName="Bot-vs-bot match — empty bot id is rejected")]
+        [Xunit.TraitAttribute("FeatureTitle", "QueueingService — queue entry, status, and dequeue logic")]
+        [Xunit.TraitAttribute("Description", "Bot-vs-bot match — empty bot id is rejected")]
+        public async System.Threading.Tasks.Task Bot_Vs_BotMatchEmptyBotIdIsRejected()
+        {
+            string[] tagsOfScenario = ((string[])(null));
+            System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Bot-vs-bot match — empty bot id is rejected", null, tagsOfScenario, argumentsOfScenario, featureTags);
+#line 64
+  this.ScenarioInitialize(scenarioInfo);
+#line hidden
+            if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
+            {
+                testRunner.SkipScenario();
+            }
+            else
+            {
+                await this.ScenarioStartAsync();
+#line 65
+    await testRunner.WhenAsync("a bot-vs-bot match is created with white \"\" black \"bot-b\" time format \"5+0\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+#line hidden
+#line 66
+    await testRunner.ThenAsync("the enqueue result is invalid input \"bot ids are required\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();
@@ -337,7 +430,7 @@ namespace MaichessMatchMakerService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Status — token not found — returns not found", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 53
+#line 70
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -347,13 +440,13 @@ namespace MaichessMatchMakerService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 54
+#line 71
     await testRunner.GivenAsync("the queue entry \"tok-1\" does not exist", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 55
+#line 72
     await testRunner.WhenAsync("get status is called for token \"tok-1\" by user \"user-a\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 56
+#line 73
     await testRunner.ThenAsync("the get status result is not found", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -368,7 +461,7 @@ namespace MaichessMatchMakerService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Status — token belongs to different user — returns not found", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 58
+#line 75
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -378,13 +471,13 @@ namespace MaichessMatchMakerService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 59
+#line 76
     await testRunner.GivenAsync("the queue entry \"tok-1\" belongs to user \"user-b\" and is waiting", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 60
+#line 77
     await testRunner.WhenAsync("get status is called for token \"tok-1\" by user \"user-a\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 61
+#line 78
     await testRunner.ThenAsync("the get status result is not found", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -399,7 +492,7 @@ namespace MaichessMatchMakerService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Status — entry is waiting — returns waiting with no match id", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 63
+#line 80
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -409,13 +502,13 @@ namespace MaichessMatchMakerService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 64
+#line 81
     await testRunner.GivenAsync("the queue entry \"tok-1\" belongs to user \"user-a\" and is waiting", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 65
+#line 82
     await testRunner.WhenAsync("get status is called for token \"tok-1\" by user \"user-a\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 66
+#line 83
     await testRunner.ThenAsync("the get status result is found with status \"waiting\" and no match id", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -430,7 +523,7 @@ namespace MaichessMatchMakerService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Status — entry is matched — returns matched with match id", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 68
+#line 85
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -440,14 +533,14 @@ namespace MaichessMatchMakerService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 69
+#line 86
     await testRunner.GivenAsync(("the queue entry \"tok-1\" belongs to user \"user-a\" and is matched with match \"match" +
                         "-xyz\""), ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 70
+#line 87
     await testRunner.WhenAsync("get status is called for token \"tok-1\" by user \"user-a\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 71
+#line 88
     await testRunner.ThenAsync("the get status result is found with status \"matched\" and match id \"match-xyz\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -462,7 +555,7 @@ namespace MaichessMatchMakerService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Dequeue — token not found — returns not found", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 75
+#line 92
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -472,13 +565,13 @@ namespace MaichessMatchMakerService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 76
+#line 93
     await testRunner.GivenAsync("the queue entry \"tok-1\" does not exist", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 77
+#line 94
     await testRunner.WhenAsync("dequeue is called for token \"tok-1\" by user \"user-a\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 78
+#line 95
     await testRunner.ThenAsync("the dequeue result is not found", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -493,7 +586,7 @@ namespace MaichessMatchMakerService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Dequeue — token belongs to different user — returns not found", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 80
+#line 97
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -503,13 +596,13 @@ namespace MaichessMatchMakerService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 81
+#line 98
     await testRunner.GivenAsync("the queue entry \"tok-1\" belongs to user \"user-b\" and is waiting", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 82
+#line 99
     await testRunner.WhenAsync("dequeue is called for token \"tok-1\" by user \"user-a\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 83
+#line 100
     await testRunner.ThenAsync("the dequeue result is not found", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
@@ -524,7 +617,7 @@ namespace MaichessMatchMakerService.Tests.Features
             string[] tagsOfScenario = ((string[])(null));
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Dequeue — valid request — removes entry and returns success", null, tagsOfScenario, argumentsOfScenario, featureTags);
-#line 85
+#line 102
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
             if ((global::Reqnroll.TagHelper.ContainsIgnoreTag(scenarioInfo.CombinedTags) || global::Reqnroll.TagHelper.ContainsIgnoreTag(featureTags)))
@@ -534,16 +627,16 @@ namespace MaichessMatchMakerService.Tests.Features
             else
             {
                 await this.ScenarioStartAsync();
-#line 86
+#line 103
     await testRunner.GivenAsync("the queue entry \"tok-1\" belongs to user \"user-a\" and is waiting", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
-#line 87
+#line 104
     await testRunner.WhenAsync("dequeue is called for token \"tok-1\" by user \"user-a\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
-#line 88
+#line 105
     await testRunner.ThenAsync("the dequeue result is success", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
-#line 89
+#line 106
     await testRunner.AndAsync("RemoveAsync is called for token \"tok-1\" user \"user-a\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
             }

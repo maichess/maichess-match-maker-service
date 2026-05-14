@@ -47,7 +47,7 @@ internal sealed class QueueingServiceContext
     internal void SetupEntry(string queueToken, string userId, QueueStatus status = QueueStatus.Waiting, string? matchId = null)
     {
         Queue.GetEntryAsync(queueToken).Returns(Task.FromResult<QueueEntry?>(
-            new QueueEntry(queueToken, userId, "blitz", status, matchId)));
+            new QueueEntry(queueToken, userId, "5+0", status, matchId)));
     }
 
     internal void SetupEntryMissing(string queueToken)

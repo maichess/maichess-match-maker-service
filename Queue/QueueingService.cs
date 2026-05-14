@@ -4,14 +4,12 @@ namespace MaichessMatchMakerService.Queue;
 
 internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesClient matchesClient, SocketNotifier socketNotifier)
 {
-    private static readonly HashSet<string> ValidTimeControls = ["bullet", "blitz", "rapid", "classical"];
-
     internal async Task<EnqueueResult> EnqueueAsync(
-        string userId, string timeControl, string opponentType, string? botId, CancellationToken ct)
+        string userId, string timeFormatId, string opponentType, string? botId, CancellationToken ct)
     {
-        if (!ValidTimeControls.Contains(timeControl))
+        if (!TimeFormatRegistry.IsKnown(timeFormatId))
         {
-            return new EnqueueResult.InvalidInput("invalid time_control");
+            return new EnqueueResult.InvalidInput("invalid time_format_id");
         }
 
         if (opponentType is not "human" and not "bot")
@@ -31,6 +29,7 @@ internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesCli
         }
 
         string queueToken = Guid.NewGuid().ToString();
+        TimeFormat timeFormat = TimeFormatRegistry.Resolve(timeFormatId);
 
         if (opponentType == "bot")
         {
@@ -38,18 +37,43 @@ internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesCli
             {
                 White = new Player { UserId = userId },
                 Black = new Player { BotId = botId },
-                TimeControl = MatchingService.MapTimeControl(timeControl),
+                TimeFormat = timeFormat,
             };
 
             CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);
             string matchId = response.Match.Id;
-            await queue.EnqueueBotMatchAsync(queueToken, userId, timeControl, matchId);
+            await queue.EnqueueBotMatchAsync(queueToken, userId, timeFormatId, matchId);
             socketNotifier.NotifyMatched(userId, matchId);
             return new EnqueueResult.Success(queueToken, matchId);
         }
 
-        await queue.EnqueueAsync(queueToken, userId, timeControl);
+        await queue.EnqueueAsync(queueToken, userId, timeFormatId);
         return new EnqueueResult.Success(queueToken);
+    }
+
+    internal async Task<EnqueueResult> CreateBotVsBotMatchAsync(
+        string whiteBotId, string blackBotId, string timeFormatId, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(whiteBotId) || string.IsNullOrWhiteSpace(blackBotId))
+        {
+            return new EnqueueResult.InvalidInput("bot ids are required");
+        }
+
+        if (!TimeFormatRegistry.IsKnown(timeFormatId))
+        {
+            return new EnqueueResult.InvalidInput("invalid time_format_id");
+        }
+
+        TimeFormat timeFormat = TimeFormatRegistry.Resolve(timeFormatId);
+        var request = new CreateMatchRequest
+        {
+            White = new Player { BotId = whiteBotId },
+            Black = new Player { BotId = blackBotId },
+            TimeFormat = timeFormat,
+        };
+
+        CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);
+        return new EnqueueResult.Success(string.Empty, response.Match.Id);
     }
 
     internal async Task<GetStatusResult> GetStatusAsync(string queueToken, string userId)
@@ -72,7 +96,7 @@ internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesCli
             return new DequeueResult.NotFound();
         }
 
-        await queue.RemoveAsync(queueToken, userId, entry.TimeControl);
+        await queue.RemoveAsync(queueToken, userId, entry.TimeFormatId);
         return new DequeueResult.Success();
     }
 }

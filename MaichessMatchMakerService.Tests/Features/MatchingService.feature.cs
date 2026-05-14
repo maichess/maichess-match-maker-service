@@ -111,10 +111,10 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 4
-    await testRunner.GivenAsync("the \"blitz\" queue has fewer than 2 players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the \"5+0\" queue has fewer than 2 players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 5
-    await testRunner.WhenAsync("the matching service processes the \"blitz\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 6
     await testRunner.ThenAsync("no CreateMatch gRPC call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -142,13 +142,13 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 9
-    await testRunner.GivenAsync("the \"blitz\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the \"5+0\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 10
     await testRunner.AndAsync("the dequeue returns 0 tokens", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 11
-    await testRunner.WhenAsync("the matching service processes the \"blitz\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 12
     await testRunner.ThenAsync("no CreateMatch gRPC call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -176,7 +176,7 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 15
-    await testRunner.GivenAsync("the \"blitz\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the \"5+0\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 16
     await testRunner.AndAsync("the dequeue returns tokens \"t1\" and \"t2\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -191,7 +191,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.AndAsync("the match manager creates match \"match-xyz\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 20
-    await testRunner.WhenAsync("the matching service processes the \"blitz\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 21
     await testRunner.ThenAsync("a CreateMatch gRPC call is made with white \"user-a\" and black \"user-b\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -225,7 +225,7 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 26
-    await testRunner.GivenAsync("the \"blitz\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the \"5+0\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 27
     await testRunner.AndAsync("the dequeue returns tokens \"t1\" and \"t2\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -237,7 +237,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.AndAsync("the entry for \"t2\" belongs to user \"user-b\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 30
-    await testRunner.WhenAsync("the matching service processes the \"blitz\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 31
     await testRunner.ThenAsync("no CreateMatch gRPC call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -268,7 +268,7 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 35
-    await testRunner.GivenAsync("the \"blitz\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the \"5+0\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 36
     await testRunner.AndAsync("the dequeue returns tokens \"t1\" and \"t2\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -280,7 +280,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.AndAsync("the entry for \"t2\" is missing", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 39
-    await testRunner.WhenAsync("the matching service processes the \"blitz\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 40
     await testRunner.ThenAsync("no CreateMatch gRPC call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -311,7 +311,7 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 44
-    await testRunner.GivenAsync("the \"blitz\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the \"5+0\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 45
     await testRunner.AndAsync("the dequeue returns tokens \"t1\" and \"t2\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -326,7 +326,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.AndAsync("the match manager throws a gRPC exception", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 49
-    await testRunner.WhenAsync("the matching service processes the \"blitz\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 50
     await testRunner.ThenAsync("no tokens are marked matched", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -357,7 +357,7 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 54
-    await testRunner.GivenAsync("the \"blitz\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync("the \"5+0\" queue reports 2 or more players", ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 55
     await testRunner.AndAsync("the dequeue returns tokens \"t1\" and \"t2\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -375,7 +375,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.AndAsync("the cancellation token is cancelled", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 60
-    await testRunner.WhenAsync("the matching service processes the \"blitz\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 61
     await testRunner.ThenAsync("the exception propagates", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
@@ -384,21 +384,23 @@ namespace MaichessMatchMakerService.Tests.Features
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableTheoryAttribute(DisplayName="Time control string maps to correct gRPC enum value")]
+        [Xunit.SkippableTheoryAttribute(DisplayName="Each time format id resolves to its registry preset on the gRPC request")]
         [Xunit.TraitAttribute("FeatureTitle", "MatchingService — background match-making logic")]
-        [Xunit.TraitAttribute("Description", "Time control string maps to correct gRPC enum value")]
-        [Xunit.InlineDataAttribute("bullet", "Bullet", new string[0])]
-        [Xunit.InlineDataAttribute("blitz", "Blitz", new string[0])]
-        [Xunit.InlineDataAttribute("rapid", "Rapid", new string[0])]
-        [Xunit.InlineDataAttribute("classical", "Classical", new string[0])]
-        [Xunit.InlineDataAttribute("unknown", "Unspecified", new string[0])]
-        public async System.Threading.Tasks.Task TimeControlStringMapsToCorrectGRPCEnumValue(string timeControl, string expectedEnum, string[] exampleTags)
+        [Xunit.TraitAttribute("Description", "Each time format id resolves to its registry preset on the gRPC request")]
+        [Xunit.InlineDataAttribute("1+0", "60000", "0", new string[0])]
+        [Xunit.InlineDataAttribute("3+0", "180000", "0", new string[0])]
+        [Xunit.InlineDataAttribute("5+0", "300000", "0", new string[0])]
+        [Xunit.InlineDataAttribute("5+3", "300000", "3000", new string[0])]
+        [Xunit.InlineDataAttribute("10+5", "600000", "5000", new string[0])]
+        [Xunit.InlineDataAttribute("30+20", "1800000", "20000", new string[0])]
+        public async System.Threading.Tasks.Task EachTimeFormatIdResolvesToItsRegistryPresetOnTheGRPCRequest(string timeFormatId, string baseMs, string incrementMs, string[] exampleTags)
         {
             string[] tagsOfScenario = exampleTags;
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
-            argumentsOfScenario.Add("timeControl", timeControl);
-            argumentsOfScenario.Add("expectedEnum", expectedEnum);
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Time control string maps to correct gRPC enum value", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            argumentsOfScenario.Add("timeFormatId", timeFormatId);
+            argumentsOfScenario.Add("baseMs", baseMs);
+            argumentsOfScenario.Add("incrementMs", incrementMs);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Each time format id resolves to its registry preset on the gRPC request", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 63
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -410,7 +412,7 @@ namespace MaichessMatchMakerService.Tests.Features
             {
                 await this.ScenarioStartAsync();
 #line 64
-    await testRunner.GivenAsync(string.Format("the \"{0}\" queue reports 2 or more players", timeControl), ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
+    await testRunner.GivenAsync(string.Format("the \"{0}\" queue reports 2 or more players", timeFormatId), ((string)(null)), ((global::Reqnroll.Table)(null)), "Given ");
 #line hidden
 #line 65
     await testRunner.AndAsync("the dequeue returns tokens \"t1\" and \"t2\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -425,10 +427,10 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.AndAsync("the match manager creates match \"match-x\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
 #line hidden
 #line 69
-    await testRunner.WhenAsync(string.Format("the matching service processes the \"{0}\" queue", timeControl), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
+    await testRunner.WhenAsync(string.Format("the matching service processes the \"{0}\" queue", timeFormatId), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 70
-    await testRunner.ThenAsync(string.Format("the CreateMatch request uses time control {0}", expectedEnum), ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync(string.Format("the CreateMatch request uses time format id \"{0}\" with base {1} and increment {2}", timeFormatId, baseMs, incrementMs), ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

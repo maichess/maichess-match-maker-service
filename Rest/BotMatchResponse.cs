@@ -3,4 +3,4 @@ using System.Diagnostics.CodeAnalysis;
 namespace MaichessMatchMakerService.Rest;
 
 [ExcludeFromCodeCoverage]
-internal sealed record QueueRequest(string TimeFormatId, OpponentRequest Opponent);
+internal sealed record BotMatchResponse(string MatchId);

@@ -1,0 +1,28 @@
+{
+  "stryker-config": {
+    "project": "MaichessMatchMakerService.csproj",
+    "solution": "../maichess-match-maker-service.sln",
+    "test-projects": [
+      "MaichessMatchMakerService.Tests.csproj"
+    ],
+    "reporters": [
+      "progress",
+      "html"
+    ],
+    "mutation-level": "Standard",
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 0
+    },
+    "mutate": [
+      "!**/Program.cs",
+      "!**/*.g.cs",
+      "!**/*.generated.cs"
+    ],
+    "ignore-methods": [
+      "*Log*",
+      "Console.Write*"
+    ]
+  }
+}

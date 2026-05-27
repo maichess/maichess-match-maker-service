@@ -57,3 +57,10 @@ Two keys per queued player:
 - Use `[JsonSerializable]` source-generation for all types passed through `System.Text.Json`
 - Validate inputs at REST boundaries; trust internal data after that
 - No comments unless explaining a non-obvious algorithm — names carry intent
+
+## Mutation Testing
+
+Stryker.NET is wired up as a local dotnet tool. Config lives in
+`MaichessMatchMakerService.Tests/stryker-config.json`. Run via
+`dotnet tool restore` then `dotnet stryker` inside the test project directory.
+See `README.md` for details.

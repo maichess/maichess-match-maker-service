@@ -108,6 +108,13 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
         Assert.Equal(matchId, result.MatchId);
     }
 
+    [Then(@"the enqueue result has an empty queue token")]
+    public void ThenEnqueueResultHasEmptyQueueToken()
+    {
+        var result = Assert.IsType<EnqueueResult.Success>(context.EnqueueResult);
+        Assert.Equal(string.Empty, result.QueueToken);
+    }
+
     [Then(@"EnqueueAsync is called for user ""([^""]*)"" with time format id ""([^""]*)""")]
     public async Task ThenEnqueueAsyncIsCalled(string userId, string timeFormatId)
     {

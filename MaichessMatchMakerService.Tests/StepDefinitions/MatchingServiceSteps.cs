@@ -96,6 +96,18 @@ internal sealed class MatchingServiceSteps(MatchingServiceContext context)
             Arg.Any<CancellationToken>());
     }
 
+    [Then(@"no dequeue is attempted")]
+    public async Task ThenNoDequeueAttempted()
+    {
+        await context.Queue.DidNotReceive().DequeueOldestPairAsync(Arg.Any<string>());
+    }
+
+    [Then(@"no exception is thrown")]
+    public void ThenNoExceptionThrown()
+    {
+        Assert.Null(context.LastException);
+    }
+
     [Then(@"a CreateMatch gRPC call is made with white ""([^""]*)"" and black ""([^""]*)""")]
     public void ThenCreateMatchCallMadeWithPlayers(string white, string black)
     {
@@ -127,6 +139,12 @@ internal sealed class MatchingServiceSteps(MatchingServiceContext context)
     public void ThenErrorIsLogged()
     {
         Assert.Contains(context.Logger.Entries, e => e.Level == LogLevel.Error);
+    }
+
+    [Then(@"no error is logged")]
+    public void ThenNoErrorIsLogged()
+    {
+        Assert.DoesNotContain(context.Logger.Entries, e => e.Level == LogLevel.Error);
     }
 
     [Then(@"the exception propagates")]

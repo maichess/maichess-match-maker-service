@@ -55,6 +55,7 @@ Feature: QueueingService — queue entry, status, and dequeue logic
     Given the match manager creates match "match-bvb"
     When a bot-vs-bot match is created with white "bot-a" black "bot-b" time format "5+0"
     Then the enqueue result is success with match id "match-bvb"
+    And the enqueue result has an empty queue token
     And the CreateMatch gRPC request has white botId "bot-a" and black botId "bot-b"
 
   Scenario: Bot-vs-bot match — invalid time format id is rejected

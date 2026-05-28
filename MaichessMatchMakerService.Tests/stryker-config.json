@@ -22,7 +22,8 @@
     ],
     "ignore-methods": [
       "*Log*",
-      "Console.Write*"
+      "Console.Write*",
+      "NotifyMatched"
     ]
   }
 }

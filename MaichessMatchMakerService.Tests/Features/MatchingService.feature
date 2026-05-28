@@ -4,12 +4,15 @@ Feature: MatchingService — background match-making logic
     Given the "5+0" queue has fewer than 2 players
     When the matching service processes the "5+0" queue
     Then no CreateMatch gRPC call is made
+    And no dequeue is attempted
+    And no exception is thrown
 
   Scenario: Dequeue returns fewer than 2 tokens — no match attempted
     Given the "5+0" queue reports 2 or more players
     And the dequeue returns 0 tokens
     When the matching service processes the "5+0" queue
     Then no CreateMatch gRPC call is made
+    And no exception is thrown
 
   Scenario: Both entries present — match created and both tokens marked matched
     Given the "5+0" queue reports 2 or more players
@@ -30,6 +33,8 @@ Feature: MatchingService — background match-making logic
     When the matching service processes the "5+0" queue
     Then no CreateMatch gRPC call is made
     And a warning is logged
+    And no error is logged
+    And no exception is thrown
 
   Scenario: Second entry is missing — warning logged and no match created
     Given the "5+0" queue reports 2 or more players
@@ -39,6 +44,8 @@ Feature: MatchingService — background match-making logic
     When the matching service processes the "5+0" queue
     Then no CreateMatch gRPC call is made
     And a warning is logged
+    And no error is logged
+    And no exception is thrown
 
   Scenario: Match Manager throws an exception — error logged and no tokens marked matched
     Given the "5+0" queue reports 2 or more players

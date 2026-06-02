@@ -32,6 +32,12 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
         context.SetupMatchManagerSuccess(matchId);
     }
 
+    [Given(@"the match manager rejects the start position")]
+    public void GivenMatchManagerRejectsStartPosition()
+    {
+        context.SetupMatchManagerRejectsStartPosition();
+    }
+
     [Given(@"the queue entry ""([^""]*)"" does not exist")]
     public void GivenQueueEntryDoesNotExist(string queueToken)
     {
@@ -64,7 +70,23 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
     public async Task WhenBotVsBotMatchIsCreated(string whiteBotId, string blackBotId, string timeFormatId)
     {
         context.EnqueueResult = await context.Service.CreateBotVsBotMatchAsync(
-            whiteBotId, blackBotId, timeFormatId, context.CancellationSource.Token);
+            whiteBotId, blackBotId, timeFormatId, "creator-1", null, context.CancellationSource.Token);
+    }
+
+    [When(@"a bot-vs-bot match is created with white ""([^""]*)"" black ""([^""]*)"" time format ""([^""]*)"" started by ""([^""]*)""")]
+    public async Task WhenBotVsBotMatchIsCreatedStartedBy(
+        string whiteBotId, string blackBotId, string timeFormatId, string createdBy)
+    {
+        context.EnqueueResult = await context.Service.CreateBotVsBotMatchAsync(
+            whiteBotId, blackBotId, timeFormatId, createdBy, null, context.CancellationSource.Token);
+    }
+
+    [When(@"a bot-vs-bot match is created with white ""([^""]*)"" black ""([^""]*)"" time format ""([^""]*)"" from FEN ""([^""]*)""")]
+    public async Task WhenBotVsBotMatchIsCreatedFromFen(
+        string whiteBotId, string blackBotId, string timeFormatId, string startFen)
+    {
+        context.EnqueueResult = await context.Service.CreateBotVsBotMatchAsync(
+            whiteBotId, blackBotId, timeFormatId, "creator-1", startFen, context.CancellationSource.Token);
     }
 
     [When(@"get status is called for token ""([^""]*)"" by user ""([^""]*)""")]
@@ -136,6 +158,20 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
         Assert.NotNull(context.LastCreateMatchRequest);
         Assert.Equal(whiteBotId, context.LastCreateMatchRequest.White.BotId);
         Assert.Equal(blackBotId, context.LastCreateMatchRequest.Black.BotId);
+    }
+
+    [Then(@"the CreateMatch gRPC request has created_by userId ""([^""]*)""")]
+    public void ThenGrpcRequestHasCreatedBy(string userId)
+    {
+        Assert.NotNull(context.LastCreateMatchRequest);
+        Assert.Equal(userId, context.LastCreateMatchRequest.CreatedBy.UserId);
+    }
+
+    [Then(@"the CreateMatch gRPC request has start_fen ""([^""]*)""")]
+    public void ThenGrpcRequestHasStartFen(string startFen)
+    {
+        Assert.NotNull(context.LastCreateMatchRequest);
+        Assert.Equal(startFen, context.LastCreateMatchRequest.StartFen);
     }
 
     [Then(@"EnqueueBotMatchAsync is called for user ""([^""]*)"" with time format id ""([^""]*)"" and match ""([^""]*)""")]

@@ -66,4 +66,15 @@ internal sealed class QueueingServiceContext
                 Arg.Any<CancellationToken>())
             .Returns(GrpcHelper.GrpcCall(response));
     }
+
+    internal void SetupMatchManagerRejectsStartPosition()
+    {
+        MatchesClient
+            .CreateMatchAsync(
+                Arg.Do<CreateMatchRequest>(r => LastCreateMatchRequest = r),
+                Arg.Any<Metadata>(),
+                Arg.Any<DateTime?>(),
+                Arg.Any<CancellationToken>())
+            .Returns(_ => throw new RpcException(new Status(StatusCode.InvalidArgument, "invalid start_fen")));
+    }
 }

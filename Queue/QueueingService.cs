@@ -1,3 +1,4 @@
+using Grpc.Core;
 using Maichess.MatchManager.V1;
 
 namespace MaichessMatchMakerService.Queue;
@@ -52,7 +53,12 @@ internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesCli
     }
 
     internal async Task<EnqueueResult> CreateBotVsBotMatchAsync(
-        string whiteBotId, string blackBotId, string timeFormatId, CancellationToken ct)
+        string whiteBotId,
+        string blackBotId,
+        string timeFormatId,
+        string createdByUserId,
+        string? startFen,
+        CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(whiteBotId) || string.IsNullOrWhiteSpace(blackBotId))
         {
@@ -70,10 +76,22 @@ internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesCli
             White = new Player { BotId = whiteBotId },
             Black = new Player { BotId = blackBotId },
             TimeFormat = timeFormat,
+
+            // Attribute the game to the human who started it so it surfaces in
+            // their initiated-game views, per the bot-vs-bot contract.
+            CreatedBy = new Player { UserId = createdByUserId },
+            StartFen = startFen ?? string.Empty,
         };
 
-        CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);
-        return new EnqueueResult.Success(string.Empty, response.Match.Id);
+        try
+        {
+            CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);
+            return new EnqueueResult.Success(string.Empty, response.Match.Id);
+        }
+        catch (RpcException ex) when (ex.StatusCode == StatusCode.InvalidArgument)
+        {
+            return new EnqueueResult.InvalidInput("invalid start_fen");
+        }
     }
 
     internal async Task<GetStatusResult> GetStatusAsync(string queueToken, string userId)

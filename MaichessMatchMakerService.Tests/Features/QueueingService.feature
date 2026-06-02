@@ -66,6 +66,24 @@ Feature: QueueingService — queue entry, status, and dequeue logic
     When a bot-vs-bot match is created with white "" black "bot-b" time format "5+0"
     Then the enqueue result is invalid input "bot ids are required"
 
+  Scenario: Bot-vs-bot match — attributes the match to the starting user
+    Given the match manager creates match "match-bvb"
+    When a bot-vs-bot match is created with white "bot-a" black "bot-b" time format "5+0" started by "starter-7"
+    Then the enqueue result is success with match id "match-bvb"
+    And the CreateMatch gRPC request has created_by userId "starter-7"
+    And the CreateMatch gRPC request has start_fen ""
+
+  Scenario: Bot-vs-bot match — forwards a custom start FEN
+    Given the match manager creates match "match-fen"
+    When a bot-vs-bot match is created with white "bot-a" black "bot-b" time format "5+0" from FEN "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"
+    Then the enqueue result is success with match id "match-fen"
+    And the CreateMatch gRPC request has start_fen "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2"
+
+  Scenario: Bot-vs-bot match — an invalid start FEN is rejected
+    Given the match manager rejects the start position
+    When a bot-vs-bot match is created with white "bot-a" black "bot-b" time format "5+0" from FEN "not-a-fen"
+    Then the enqueue result is invalid input "invalid start_fen"
+
   # ── GetStatusAsync ─────────────────────────────────────────────────────────
 
   Scenario: Status — token not found — returns not found

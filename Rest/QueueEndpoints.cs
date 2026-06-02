@@ -87,7 +87,7 @@ internal static class QueueEndpoints
         Bots.BotsClient botsClient,
         CancellationToken ct)
     {
-        if (!TryGetUserId(principal, out _))
+        if (!TryGetUserId(principal, out string userId))
         {
             return Results.Unauthorized();
         }
@@ -100,7 +100,7 @@ internal static class QueueEndpoints
         }
 
         EnqueueResult result = await service.CreateBotVsBotMatchAsync(
-            body.WhiteBotId, body.BlackBotId, body.TimeFormatId, ct);
+            body.WhiteBotId, body.BlackBotId, body.TimeFormatId, userId, body.StartFen, ct);
 
         return result switch
         {

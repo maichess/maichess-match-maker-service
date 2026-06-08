@@ -3,7 +3,7 @@ using Maichess.MatchManager.V1;
 
 namespace MaichessMatchMakerService.Queue;
 
-internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesClient matchesClient, SocketNotifier socketNotifier)
+internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesClient matchesClient, IMatchmakingNotifier socketNotifier)
 {
     internal async Task<EnqueueResult> EnqueueAsync(
         string userId, string timeFormatId, string opponentType, string? botId, CancellationToken ct)

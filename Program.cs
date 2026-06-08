@@ -37,7 +37,18 @@ builder.Services.AddSingleton(new Bots.BotsClient(GrpcChannel.ForAddress(engineU
 string socketServiceUrl = builder.Configuration["Services:SocketService"]
     ?? throw new InvalidOperationException("Services:SocketService is not configured");
 builder.Services.AddSingleton(new SocketSvc.SocketClient(GrpcChannel.ForAddress(socketServiceUrl)));
-builder.Services.AddSingleton<SocketNotifier>();
+
+// Real-time transport: "kafka" publishes matched/PlayersMatched to Kafka (default);
+// "grpc" falls back to the legacy Socket.EmitEvent path.
+string socketTransport = builder.Configuration["Socket:Transport"] ?? "kafka";
+if (string.Equals(socketTransport, "grpc", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<IMatchmakingNotifier, SocketNotifier>();
+}
+else
+{
+    builder.Services.AddSingleton<IMatchmakingNotifier, KafkaMatchmakingNotifier>();
+}
 
 // Queue service and background matching worker
 builder.Services.AddSingleton<QueueingService>();

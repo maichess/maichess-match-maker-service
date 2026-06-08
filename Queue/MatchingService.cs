@@ -5,7 +5,7 @@ namespace MaichessMatchMakerService.Queue;
 internal sealed class MatchingService(
     IQueueRepository queue,
     Matches.MatchesClient matchesClient,
-    SocketNotifier socketNotifier,
+    IMatchmakingNotifier socketNotifier,
     ILogger<MatchingService> logger)
 {
     internal async Task TryMatchAsync(string timeFormatId, CancellationToken ct)
@@ -33,6 +33,8 @@ internal sealed class MatchingService(
                 tokens[1]);
             return;
         }
+
+        socketNotifier.PlayersMatched(white.UserId, black.UserId, timeFormatId);
 
         try
         {

@@ -9,12 +9,23 @@ namespace MaichessMatchMakerService.Queue;
 
 [ExcludeFromCodeCoverage]
 internal sealed class SocketNotifier(SocketSvc.SocketClient client, ILogger<SocketNotifier> logger)
+    : IMatchmakingNotifier
 {
-    internal void NotifyMatched(string userId, string matchId)
+    public void NotifyMatched(string userId, string matchId)
     {
         Struct payload = new();
         payload.Fields["match_id"] = Value.ForString(matchId);
         _ = Task.Run(() => EmitAsync(userId, "matched", payload));
+    }
+
+    // Legacy gRPC transport emits no matchmaking event trail; log for parity.
+    public void PlayersMatched(string whiteUserId, string blackUserId, string timeFormatId)
+    {
+        if (logger.IsEnabled(LogLevel.Debug))
+        {
+            logger.LogDebug(
+                "Players matched: {White} vs {Black} ({TimeFormat})", whiteUserId, blackUserId, timeFormatId);
+        }
     }
 
     private async Task EmitAsync(string userId, string @event, Struct payload)

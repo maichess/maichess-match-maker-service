@@ -5,6 +5,7 @@ using Maichess.Engine.V1;
 using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Queue;
 using MaichessMatchMakerService.Rest;
+using MaichessMatchMakerService.Streaming;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Resources;
@@ -49,6 +50,12 @@ else
 {
     builder.Services.AddSingleton<IMatchmakingNotifier, KafkaMatchmakingNotifier>();
 }
+
+// Streamiz: the single user-rating KTable + co-partitioned join, hosting skill-based
+// pairing's local rating lookups (no GetUser RPC). See caching-and-read-models.md.
+builder.Services.AddSingleton<MatchMakerStreams>();
+builder.Services.AddSingleton<IUserRatingStore>(sp => sp.GetRequiredService<MatchMakerStreams>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<MatchMakerStreams>());
 
 // Queue service and background matching worker
 builder.Services.AddSingleton<QueueingService>();

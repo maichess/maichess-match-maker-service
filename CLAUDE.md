@@ -23,6 +23,7 @@ Implement against these contracts exactly. If a contract cannot be implemented a
 ```
 MaichessMatchMakerService/
   Queue/           # Redis-backed queue: enqueue, dequeue, match, status
+  Streaming/       # Streamiz user-ratings KTable + co-partitioned join (skill pairing)
   Rest/            # REST endpoint handlers (POST /queue, GET /queue/{token}/status, DELETE /queue/{token})
   Program.cs       # Startup: DI wiring, middleware, route registration
 ```
@@ -45,7 +46,7 @@ Two keys per queued player:
 ## Matching
 
 - Match players with the same `time_control` only.
-- When the queue for a given time control has ≥ 10 waiting players, prefer pairing by closest ELO; otherwise pair by longest wait (FIFO).
+- When the queue for a given time control has ≥ 10 waiting players, pair by closest ELO; otherwise pair by longest wait (FIFO). Live ratings come from the **Streamiz user-ratings KTable** (`Streaming/`, fed by `user.events.v1`), read locally via interactive queries (`IUserRatingStore`) — no `GetUser` RPC. `MatchingService.ClosestRatedPair` picks the minimum-gap pair; flagged/unrated players are excluded and a lost race (`DequeueSpecificPairAsync` returns false) falls back to FIFO. See `maichess-knowledge-base/caching-and-read-models.md` (Stage 3) and `README.md`.
 - Bot matches skip the queue entirely: call `Matches.CreateMatch` immediately and return `match_id` directly in the `POST /queue` response.
 
 ## Code Style

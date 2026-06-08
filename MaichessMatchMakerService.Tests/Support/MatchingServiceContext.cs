@@ -1,6 +1,7 @@
 using Grpc.Core;
 using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Queue;
+using MaichessMatchMakerService.Streaming;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
@@ -13,6 +14,8 @@ internal sealed class MatchingServiceContext
     internal IQueueRepository Queue { get; } = Substitute.For<IQueueRepository>();
 
     internal Matches.MatchesClient MatchesClient { get; } = Substitute.For<Matches.MatchesClient>();
+
+    internal IUserRatingStore RatingStore { get; } = Substitute.For<IUserRatingStore>();
 
     internal SocketNotifier SocketNotifier { get; } =
         new SocketNotifier(Substitute.For<SocketSvc.SocketClient>(), NullLogger<SocketNotifier>.Instance);
@@ -31,10 +34,31 @@ internal sealed class MatchingServiceContext
 
     internal MatchingServiceContext()
     {
-        MatchingService = new MatchingService(Queue, MatchesClient, SocketNotifier, Logger);
+        MatchingService = new MatchingService(Queue, MatchesClient, SocketNotifier, RatingStore, Logger);
 
         Queue.DequeueOldestPairAsync(Arg.Any<string>())
             .Returns(Task.FromResult(Array.Empty<string>()));
+        Queue.GetWaitingPlayersAsync(Arg.Any<string>())
+            .Returns(Task.FromResult<IReadOnlyList<(string Token, string UserId)>>([]));
+    }
+
+    // Configures the live rating the KTable store reports for a user (skill pairing path).
+    internal void SetupRating(string userId, double rating, bool flagged = false, bool hasRating = true)
+    {
+        RatingStore.TryGet(userId).Returns(new UserRatingState(rating, 0, flagged, hasRating));
+    }
+
+    // The waiting (token, userId) players a skill-pairing pass reads before choosing two.
+    internal void SetupWaitingPlayers(params (string Token, string UserId)[] players)
+    {
+        Queue.GetWaitingPlayersAsync(CurrentTimeFormatId!)
+            .Returns(Task.FromResult<IReadOnlyList<(string Token, string UserId)>>(players));
+    }
+
+    internal void SetupDequeueSpecificPair(string tokenA, string tokenB, bool success)
+    {
+        Queue.DequeueSpecificPairAsync(CurrentTimeFormatId!, tokenA, tokenB)
+            .Returns(Task.FromResult(success));
     }
 
     internal void SetupQueueCount(string timeFormatId, long count)

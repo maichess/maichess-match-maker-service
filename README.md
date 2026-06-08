@@ -2,6 +2,25 @@
 
 See `CLAUDE.md` for architecture, contracts, and design notes.
 
+## Streamiz user-ratings KTable (skill-based pairing)
+
+This service hosts the platform's single **Streamiz** (`Streamiz.Kafka.Net`) topology —
+the deliberate one-KTable exception to the Redis-replica default (see
+`maichess-knowledge-base/caching-and-read-models.md`). It materialises the compacted
+`user.events.v1` into a RocksDb-backed KTable of live ratings and joins it onto
+`matchmaking.events.v1` (`PlayerEnqueued`), co-partitioned on player/user id, so
+skill-based pairing reads ratings locally instead of calling `GetUser`.
+
+- **Code:** `Streaming/` (`UserRatingTopology`, `MatchMakerStreams`, the pure readers).
+- **State store:** RocksDb at `STREAMIZ_STATE_DIR` (default `/var/lib/match-maker/streamiz`;
+  the chart mounts a volume there). Rebuildable from its changelog topic
+  `match-maker-user-ratings-user-ratings-store-changelog`.
+- **Co-partition requirement:** `matchmaking.events.v1` and `user.events.v1` must share
+  partition count (both 3 in the chart) for the join.
+- **Config:** `KAFKA_BOOTSTRAP`, `SCHEMA_REGISTRY_URL`, `STREAMIZ_STATE_DIR`.
+- **Tests:** the topology is unit-tested with Streamiz's `TopologyTestDriver`
+  (`MaichessMatchMakerService.Tests/Streaming`).
+
 ## Mutation Testing (Stryker.NET)
 
 Stryker is installed as a local .NET tool. Configuration lives in

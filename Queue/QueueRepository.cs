@@ -91,6 +91,35 @@ internal sealed class QueueRepository(IConnectionMultiplexer redis) : IQueueRepo
         return entries.Select(e => (string)e.Element!).ToArray();
     }
 
+    public async Task<IReadOnlyList<(string Token, string UserId)>> GetWaitingPlayersAsync(string timeFormatId)
+    {
+        RedisValue[] tokens = await Db.SortedSetRangeByRankAsync(QueueKey(timeFormatId));
+
+        var players = new List<(string Token, string UserId)>(tokens.Length);
+        foreach (RedisValue token in tokens)
+        {
+            RedisValue userId = await Db.HashGetAsync(EntryKey((string)token!), "user_id");
+            if (userId.HasValue)
+            {
+                players.Add(((string)token!, (string)userId!));
+            }
+        }
+
+        return players;
+    }
+
+    public async Task<bool> DequeueSpecificPairAsync(string timeFormatId, string tokenA, string tokenB)
+    {
+        // Only succeed if both tokens are still queued; remove them as one transaction so
+        // a concurrent matcher cannot claim one of the pair.
+        ITransaction tx = Db.CreateTransaction();
+        tx.AddCondition(Condition.SortedSetContains(QueueKey(timeFormatId), tokenA));
+        tx.AddCondition(Condition.SortedSetContains(QueueKey(timeFormatId), tokenB));
+        _ = tx.SortedSetRemoveAsync(QueueKey(timeFormatId), tokenA);
+        _ = tx.SortedSetRemoveAsync(QueueKey(timeFormatId), tokenB);
+        return await tx.ExecuteAsync();
+    }
+
     private static string EntryKey(string queueToken) => $"queue_entry:{queueToken}";
 
     private static string QueueKey(string timeFormatId) => $"queue:{timeFormatId}";

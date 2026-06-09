@@ -30,6 +30,26 @@ a natural candidate to remain request/response regardless.
 
 **Keeps (synchronous):** REST reads (`GET /time-formats`, `GET /bots`), `Matches.CreateMatch`.
 
+### Protobuf event serde — pending v0.6.0 publish (Kafka task `01`)
+
+The event/command schemas are now **Protobuf**, not Avro: `maichess-api-contracts/protos/events/v1/`
+(`match_commands.proto`, `matchmaking_events.proto`, `socket_outbound.proto`, all package
+`maichess.events.v1`). They mirror the `events/v1/*.avsc` field-for-field; the `.avsc` files stay in
+place until each topic cuts over (task `02`).
+
+**Blocked on the contracts publish** (publish-first — see
+[serialization-protobuf-migration.md](../../maichess-knowledge-base/knowledge/architecture/serialization-protobuf-migration.md)):
+
+1. The user tags/pushes contracts **v0.6.0** so the generated `Maichess.Events.V1` types ship in
+   `Maichess.PlatformProtos`. A fresh agent shell cannot restore the just-published version.
+2. Bump `Maichess.PlatformProtos` in `MaichessMatchMakerService.csproj` from `0.4.0` → `0.6.0`.
+3. Add a `Confluent.SchemaRegistry.Serdes.Protobuf` serializer helper (over `Google.Protobuf` + the
+   `Maichess.Events.V1` types) alongside the current Avro one. Serde plumbing only; **no
+   producer/consumer is switched in task `01`** — the `IMatchCreator` / `IMatchmakingNotifier` seams
+   are untouched here.
+
+Cannot compile or test until step 1–2 land.
+
 ---
 
 ## GET /bots — description field not covered by tests

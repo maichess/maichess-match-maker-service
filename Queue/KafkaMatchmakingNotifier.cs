@@ -1,16 +1,16 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using System.Text.Json;
-using Avro;
-using Avro.Generic;
 using Confluent.Kafka;
 using Confluent.SchemaRegistry;
-using Confluent.SchemaRegistry.Serdes;
+using Maichess.Events.V1;
 
 namespace MaichessMatchMakerService.Queue;
 
 // Publishes the `matched` push to socket.outbound.v1 (user-targeted) and pairing
 // facts to matchmaking.events.v1, replacing the direct Socket.EmitEvent gRPC call.
+// Both topics carry Protobuf via the Confluent Protobuf serde (Kafka task 02). The
+// downstream consumers (socket-service, match-maker's own ratings topology) dual-read,
+// so the cutover is reversible.
 [ExcludeFromCodeCoverage]
 internal sealed class KafkaMatchmakingNotifier : IMatchmakingNotifier, IDisposable
 {
@@ -18,12 +18,9 @@ internal sealed class KafkaMatchmakingNotifier : IMatchmakingNotifier, IDisposab
     private const string EventsTopic = "matchmaking.events.v1";
     private const string ProducerName = "match-maker-service";
 
-    private readonly IProducer<string, GenericRecord> producer;
+    private readonly IProducer<string, OutboundEvent> socketProducer;
+    private readonly IProducer<string, MatchmakingEvent> eventsProducer;
     private readonly CachedSchemaRegistryClient registry;
-    private readonly RecordSchema socketEnvelopeSchema;
-    private readonly RecordSchema socketPushSchema;
-    private readonly RecordSchema eventsEnvelopeSchema;
-    private readonly RecordSchema playersMatchedSchema;
     private readonly ILogger<KafkaMatchmakingNotifier> logger;
 
     public KafkaMatchmakingNotifier(ILogger<KafkaMatchmakingNotifier> logger)
@@ -34,17 +31,13 @@ internal sealed class KafkaMatchmakingNotifier : IMatchmakingNotifier, IDisposab
         string registryUrl = Environment.GetEnvironmentVariable("SCHEMA_REGISTRY_URL")
             ?? "http://schema-registry:8081";
 
-        socketEnvelopeSchema = (RecordSchema)Avro.Schema.Parse(LoadSchema("socket.outbound.v1.avsc"));
-        socketPushSchema = (RecordSchema)socketEnvelopeSchema.Fields.Single(f => f.Name == "payload").Schema;
-
-        eventsEnvelopeSchema = (RecordSchema)Avro.Schema.Parse(LoadSchema("matchmaking.events.v1.avsc"));
-        var eventsUnion = (UnionSchema)eventsEnvelopeSchema.Fields.Single(f => f.Name == "payload").Schema;
-        playersMatchedSchema = (RecordSchema)eventsUnion.Schemas.Single(s => s.Name == "PlayersMatched");
-
         registry = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = registryUrl });
-        producer = new ProducerBuilder<string, GenericRecord>(
-                new ProducerConfig { BootstrapServers = bootstrap })
-            .SetValueSerializer(new AvroSerializer<GenericRecord>(registry))
+        var producerConfig = new ProducerConfig { BootstrapServers = bootstrap };
+        socketProducer = new ProducerBuilder<string, OutboundEvent>(producerConfig)
+            .SetValueSerializer(ProtobufEventSerdes.Serializer<OutboundEvent>(registry))
+            .Build();
+        eventsProducer = new ProducerBuilder<string, MatchmakingEvent>(producerConfig)
+            .SetValueSerializer(ProtobufEventSerdes.Serializer<MatchmakingEvent>(registry))
             .Build();
     }
 
@@ -52,76 +45,79 @@ internal sealed class KafkaMatchmakingNotifier : IMatchmakingNotifier, IDisposab
     {
         string payloadJson = JsonSerializer.Serialize(new Dictionary<string, string> { ["match_id"] = matchId });
 
-        GenericRecord push = new(socketPushSchema);
-        push.Add("target_user_id", userId);
-        push.Add("target_match_id", null);
-        push.Add("event_name", "matched");
-        push.Add("payload_json", payloadJson);
+        OutboundEvent envelope = new()
+        {
+            EventId = Guid.NewGuid().ToString(),
+            EventType = "socket.matched",
+            AggregateId = userId,
+            Sequence = 0L,
+            OccurredAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            Producer = ProducerName,
+            Push = new SocketPush
+            {
+                TargetUserId = userId,
+                EventName = "matched",
+                PayloadJson = payloadJson,
+            },
+        };
 
-        GenericRecord envelope = NewEnvelope(socketEnvelopeSchema, userId, "socket.matched");
-        envelope.Add("payload", push);
-        Publish(SocketTopic, userId, envelope, "matched");
+        Message<string, OutboundEvent> message = new() { Key = userId, Value = envelope };
+        _ = Task.Run(() => ProduceSocket(message));
     }
 
     public void PlayersMatched(string whiteUserId, string blackUserId, string timeFormatId)
     {
-        GenericRecord paired = new(playersMatchedSchema);
-        paired.Add("white_user_id", whiteUserId);
-        paired.Add("black_user_id", blackUserId);
-        paired.Add("time_format_id", timeFormatId);
+        MatchmakingEvent envelope = new()
+        {
+            EventId = Guid.NewGuid().ToString(),
+            EventType = "matchmaking.PlayersMatched",
+            AggregateId = whiteUserId,
+            Sequence = 0L,
+            OccurredAt = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            Producer = ProducerName,
+            PlayersMatched = new PlayersMatched
+            {
+                WhiteUserId = whiteUserId,
+                BlackUserId = blackUserId,
+                TimeFormatId = timeFormatId,
+            },
+        };
 
-        GenericRecord envelope = NewEnvelope(eventsEnvelopeSchema, whiteUserId, "matchmaking.PlayersMatched");
-        envelope.Add("payload", paired);
-        Publish(EventsTopic, whiteUserId, envelope, "PlayersMatched");
+        Message<string, MatchmakingEvent> message = new() { Key = whiteUserId, Value = envelope };
+        _ = Task.Run(() => ProduceEvents(message));
     }
 
     public void Dispose()
     {
-        producer.Flush(TimeSpan.FromSeconds(5));
-        producer.Dispose();
+        socketProducer.Flush(TimeSpan.FromSeconds(5));
+        eventsProducer.Flush(TimeSpan.FromSeconds(5));
+        socketProducer.Dispose();
+        eventsProducer.Dispose();
         registry.Dispose();
     }
 
-    private static GenericRecord NewEnvelope(RecordSchema schema, string aggregateId, string eventType)
-    {
-        GenericRecord envelope = new(schema);
-        envelope.Add("event_id", Guid.NewGuid().ToString());
-        envelope.Add("event_type", eventType);
-        envelope.Add("aggregate_id", aggregateId);
-        envelope.Add("sequence", 0L);
-        envelope.Add("occurred_at", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-        envelope.Add("correlation_id", string.Empty);
-        envelope.Add("causation_id", string.Empty);
-        envelope.Add("producer", ProducerName);
-        return envelope;
-    }
-
-    private static string LoadSchema(string suffix)
-    {
-        Assembly asm = typeof(KafkaMatchmakingNotifier).Assembly;
-        string name = asm.GetManifestResourceNames()
-            .Single(n => n.EndsWith(suffix, StringComparison.Ordinal));
-        using Stream stream = asm.GetManifestResourceStream(name)!;
-        using StreamReader reader = new(stream);
-        return reader.ReadToEnd();
-    }
-
-    private void Publish(string topic, string key, GenericRecord value, string label)
-    {
-        Message<string, GenericRecord> message = new() { Key = key, Value = value };
-        _ = Task.Run(() => ProduceAsync(topic, message, label));
-    }
-
 #pragma warning disable CA1031 // Fire-and-forget background publish: log and swallow all failures.
-    private async Task ProduceAsync(string topic, Message<string, GenericRecord> message, string label)
+    private async Task ProduceSocket(Message<string, OutboundEvent> message)
     {
         try
         {
-            await producer.ProduceAsync(topic, message);
+            await socketProducer.ProduceAsync(SocketTopic, message);
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Failed to publish {Label} to {Topic}", label, topic);
+            logger.LogWarning(ex, "Failed to publish matched to {Topic}", SocketTopic);
+        }
+    }
+
+    private async Task ProduceEvents(Message<string, MatchmakingEvent> message)
+    {
+        try
+        {
+            await eventsProducer.ProduceAsync(EventsTopic, message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to publish PlayersMatched to {Topic}", EventsTopic);
         }
     }
 #pragma warning restore CA1031

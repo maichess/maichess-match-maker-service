@@ -1,3 +1,4 @@
+using Maichess.Events.V1;
 using MaichessMatchMakerService.Streaming;
 using MaichessMatchMakerService.Tests.Support;
 using Streamiz.Kafka.Net;
@@ -28,7 +29,7 @@ public sealed class UserRatingTopologyTests
         UserRatingTopology.Build(
             builder,
             new AvroTestSerDes(AvroTestData.UserEvents),
-            new AvroTestSerDes(AvroTestData.Matchmaking),
+            new ProtoTestSerDes<MatchmakingEvent>(),
             inMemoryStore: true);
 
         return new TopologyTestDriver(builder.Build(), config);
@@ -52,12 +53,12 @@ public sealed class UserRatingTopologyTests
         var users = driver.CreateInputTopic(
             UserRatingTopology.UserEventsTopic, new StringSerDes(), new AvroTestSerDes(AvroTestData.UserEvents));
         var enqueues = driver.CreateInputTopic(
-            UserRatingTopology.MatchmakingEventsTopic, new StringSerDes(), new AvroTestSerDes(AvroTestData.Matchmaking));
+            UserRatingTopology.MatchmakingEventsTopic, new StringSerDes(), new ProtoTestSerDes<MatchmakingEvent>());
         var enriched = driver.CreateOutputTopic(
             UserRatingTopology.EnrichedTopic, ReadTimeout, new StringSerDes(), new PocoJsonSerDes<SkillEnrichedEnqueue>());
 
         users.PipeInput("u1", AvroTestData.RatingUpdated("u1", 1500));
-        enqueues.PipeInput("u1", AvroTestData.PlayerEnqueued("u1", "tok-1", "5+0"));
+        enqueues.PipeInput("u1", ProtoTestData.PlayerEnqueued("u1", "tok-1", "5+0"));
 
         var record = enriched.ReadKeyValue();
         Assert.Equal("u1", record.Message.Key);
@@ -92,12 +93,12 @@ public sealed class UserRatingTopologyTests
     {
         using TopologyTestDriver driver = BuildDriver();
         var enqueues = driver.CreateInputTopic(
-            UserRatingTopology.MatchmakingEventsTopic, new StringSerDes(), new AvroTestSerDes(AvroTestData.Matchmaking));
+            UserRatingTopology.MatchmakingEventsTopic, new StringSerDes(), new ProtoTestSerDes<MatchmakingEvent>());
         var enriched = driver.CreateOutputTopic(
             UserRatingTopology.EnrichedTopic, ReadTimeout, new StringSerDes(), new PocoJsonSerDes<SkillEnrichedEnqueue>());
 
         // No user.events for u2 → inner join drops the enqueue.
-        enqueues.PipeInput("u2", AvroTestData.PlayerEnqueued("u2", "tok-2", "5+0"));
+        enqueues.PipeInput("u2", ProtoTestData.PlayerEnqueued("u2", "tok-2", "5+0"));
 
         Assert.Empty(enriched.ReadKeyValueList());
     }
@@ -109,12 +110,12 @@ public sealed class UserRatingTopologyTests
         var users = driver.CreateInputTopic(
             UserRatingTopology.UserEventsTopic, new StringSerDes(), new AvroTestSerDes(AvroTestData.UserEvents));
         var enqueues = driver.CreateInputTopic(
-            UserRatingTopology.MatchmakingEventsTopic, new StringSerDes(), new AvroTestSerDes(AvroTestData.Matchmaking));
+            UserRatingTopology.MatchmakingEventsTopic, new StringSerDes(), new ProtoTestSerDes<MatchmakingEvent>());
         var enriched = driver.CreateOutputTopic(
             UserRatingTopology.EnrichedTopic, ReadTimeout, new StringSerDes(), new PocoJsonSerDes<SkillEnrichedEnqueue>());
 
         users.PipeInput("u1", AvroTestData.RatingUpdated("u1", 1500));
-        enqueues.PipeInput("u1", AvroTestData.PlayerDequeued("u1", "tok-1"));
+        enqueues.PipeInput("u1", ProtoTestData.PlayerDequeued("u1", "tok-1"));
 
         Assert.Empty(enriched.ReadKeyValueList());
     }

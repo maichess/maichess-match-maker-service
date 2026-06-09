@@ -30,12 +30,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <EmbeddedResource Include="Kafka/socket.outbound.v1.avsc" />
-        <EmbeddedResource Include="Kafka/matchmaking.events.v1.avsc" />
-        <EmbeddedResource Include="Kafka/match.commands.v1.avsc" />
-    </ItemGroup>
-
-    <ItemGroup>
         <PackageReference Include="Apache.Avro" Version="1.12.0" />
         <PackageReference Include="Confluent.Kafka" Version="2.12.0" />
         <PackageReference Include="Confluent.SchemaRegistry" Version="2.12.0" />

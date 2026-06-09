@@ -41,8 +41,8 @@ public sealed class StreamingReaderTests
     [Fact]
     public void IsPlayerEnqueued_TrueForEnqueueFalseOtherwise()
     {
-        Assert.True(EnqueueReader.IsPlayerEnqueued(AvroTestData.PlayerEnqueued("u1", "tok", "5+0")));
-        Assert.False(EnqueueReader.IsPlayerEnqueued(AvroTestData.PlayerDequeued("u1", "tok")));
+        Assert.True(EnqueueReader.IsPlayerEnqueued(ProtoTestData.PlayerEnqueued("u1", "tok", "5+0")));
+        Assert.False(EnqueueReader.IsPlayerEnqueued(ProtoTestData.PlayerDequeued("u1", "tok")));
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public sealed class StreamingReaderTests
     {
         var rating = new UserRatingState(1320, 70, true, true);
 
-        SkillEnrichedEnqueue enriched = EnqueueReader.Enrich(AvroTestData.PlayerEnqueued("u9", "tok-9", "10+0"), rating);
+        SkillEnrichedEnqueue enriched = EnqueueReader.Enrich(ProtoTestData.PlayerEnqueued("u9", "tok-9", "10+0"), rating);
 
         Assert.Equal("u9", enriched.PlayerId);
         Assert.Equal("tok-9", enriched.QueueToken);

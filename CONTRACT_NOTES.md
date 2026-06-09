@@ -53,6 +53,22 @@ Done:
 `dotnet restore` cannot pull `Maichess.PlatformProtos@0.6.0` from GitHub Packages (401). Run
 `dotnet test -p:CollectCoverage=true` where the token is available to confirm.
 
+## Topics migrated to Protobuf (Kafka task `02`)
+
+`match.commands.v1`, `matchmaking.events.v1`, and `socket.outbound.v1` now carry **Protobuf**;
+the `.avsc` files (canonical + the embedded `Kafka/*.avsc`) are retired and `dotnet restore`/build
+succeeds locally at `0.6.0` (the 401 above did not recur — the package is in the NuGet cache).
+
+- **Producers → proto:** `KafkaMatchCreator` emits `MatchCommand`; `KafkaMatchmakingNotifier` emits
+  `MatchmakingEvent` (PlayersMatched) and `OutboundEvent` (matched), both via the Protobuf serde.
+- **Consumer dual-read:** the Streamiz ratings topology now works in the proto `MatchmakingEvent`
+  type; `MatchmakingEventSerDes` discriminates Avro vs Protobuf on the schema id's registry type
+  and maps the Avro arm via pure `MatchmakingAvroToProto`. `EnqueueReader` reworked onto proto.
+- **Decision (deviation from the task's literal step (c)):** the Avro **read** arm is *retained*
+  (removed in task `09` with the registry) so already-enqueued Avro decodes and the cutover is
+  reversible. "No Avro on the wire" still holds — nothing produces Avro. Serde glue stays
+  `[ExcludeFromCodeCoverage]`; the pure mappers/discriminator are unit-tested.
+
 ---
 
 ## GET /bots — description field not covered by tests

@@ -1,5 +1,4 @@
 using Grpc.Core;
-using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Queue;
 using MaichessMatchMakerService.Streaming;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -13,7 +12,7 @@ internal sealed class MatchingServiceContext
 {
     internal IQueueRepository Queue { get; } = Substitute.For<IQueueRepository>();
 
-    internal Matches.MatchesClient MatchesClient { get; } = Substitute.For<Matches.MatchesClient>();
+    internal FakeMatchCreator Creator { get; } = new FakeMatchCreator();
 
     internal IUserRatingStore RatingStore { get; } = Substitute.For<IUserRatingStore>();
 
@@ -26,15 +25,13 @@ internal sealed class MatchingServiceContext
 
     internal string? CurrentTimeFormatId { get; set; }
 
-    internal CreateMatchRequest? LastCreateMatchRequest { get; set; }
-
     internal Exception? LastException { get; set; }
 
     internal CancellationTokenSource CancellationSource { get; } = new CancellationTokenSource();
 
     internal MatchingServiceContext()
     {
-        MatchingService = new MatchingService(Queue, MatchesClient, SocketNotifier, RatingStore, Logger);
+        MatchingService = new MatchingService(Queue, Creator, SocketNotifier, RatingStore, Logger);
 
         Queue.DequeueOldestPairAsync(Arg.Any<string>())
             .Returns(Task.FromResult(Array.Empty<string>()));
@@ -92,24 +89,11 @@ internal sealed class MatchingServiceContext
 
     internal void SetupMatchManagerSuccess(string matchId)
     {
-        var response = new CreateMatchResponse { Match = new Match { Id = matchId } };
-        MatchesClient
-            .CreateMatchAsync(
-                Arg.Do<CreateMatchRequest>(r => LastCreateMatchRequest = r),
-                Arg.Any<Metadata>(),
-                Arg.Any<DateTime?>(),
-                Arg.Any<CancellationToken>())
-            .Returns(GrpcHelper.GrpcCall(response));
+        Creator.ReturnsMatch(matchId);
     }
 
     internal void SetupMatchManagerThrows()
     {
-        MatchesClient
-            .CreateMatchAsync(
-                Arg.Any<CreateMatchRequest>(),
-                Arg.Any<Metadata>(),
-                Arg.Any<DateTime?>(),
-                Arg.Any<CancellationToken>())
-            .Returns(GrpcHelper.GrpcCallFailed<CreateMatchResponse>());
+        Creator.Throws(new RpcException(new Status(StatusCode.Internal, "upstream error")));
     }
 }

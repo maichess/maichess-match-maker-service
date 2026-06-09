@@ -3,7 +3,11 @@ using Maichess.MatchManager.V1;
 
 namespace MaichessMatchMakerService.Queue;
 
-internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesClient matchesClient, IMatchmakingNotifier socketNotifier)
+internal sealed class QueueingService(
+    IQueueRepository queue,
+    IMatchCreator matchCreator,
+    Matches.MatchesClient matchesClient,
+    IMatchmakingNotifier socketNotifier)
 {
     internal async Task<EnqueueResult> EnqueueAsync(
         string userId, string timeFormatId, string opponentType, string? botId, CancellationToken ct)
@@ -30,19 +34,15 @@ internal sealed class QueueingService(IQueueRepository queue, Matches.MatchesCli
         }
 
         string queueToken = Guid.NewGuid().ToString();
-        TimeFormat timeFormat = TimeFormatRegistry.Resolve(timeFormatId);
 
         if (opponentType == "bot")
         {
-            var request = new CreateMatchRequest
-            {
-                White = new Player { UserId = userId },
-                Black = new Player { BotId = botId },
-                TimeFormat = timeFormat,
-            };
+            string matchId = await matchCreator.CreateMatchAsync(
+                new CommandPlayer(userId, null),
+                new CommandPlayer(null, botId),
+                timeFormatId,
+                ct);
 
-            CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);
-            string matchId = response.Match.Id;
             await queue.EnqueueBotMatchAsync(queueToken, userId, timeFormatId, matchId);
             socketNotifier.NotifyMatched(userId, matchId);
             return new EnqueueResult.Success(queueToken, matchId);

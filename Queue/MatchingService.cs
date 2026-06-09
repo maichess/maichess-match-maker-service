@@ -1,11 +1,10 @@
-using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Streaming;
 
 namespace MaichessMatchMakerService.Queue;
 
 internal sealed class MatchingService(
     IQueueRepository queue,
-    Matches.MatchesClient matchesClient,
+    IMatchCreator matchCreator,
     IMatchmakingNotifier socketNotifier,
     IUserRatingStore ratingStore,
     ILogger<MatchingService> logger)
@@ -71,16 +70,12 @@ internal sealed class MatchingService(
 
         try
         {
-            var request = new CreateMatchRequest
-            {
-                White = new Player { UserId = white.UserId },
-                Black = new Player { UserId = black.UserId },
-                TimeFormat = TimeFormatRegistry.Resolve(timeFormatId),
-            };
+            string matchId = await matchCreator.CreateMatchAsync(
+                new CommandPlayer(white.UserId, null),
+                new CommandPlayer(black.UserId, null),
+                timeFormatId,
+                ct);
 
-            CreateMatchResponse response = await matchesClient.CreateMatchAsync(request, cancellationToken: ct);
-
-            string matchId = response.Match.Id;
             await queue.MarkMatchedAsync(tokens[0], white.UserId, matchId);
             await queue.MarkMatchedAsync(tokens[1], black.UserId, matchId);
 

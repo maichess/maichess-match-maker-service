@@ -117,7 +117,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 6
-    await testRunner.ThenAsync("no CreateMatch gRPC call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("no create-match call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 7
     await testRunner.AndAsync("no dequeue is attempted", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -157,7 +157,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 14
-    await testRunner.ThenAsync("no CreateMatch gRPC call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("no create-match call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 15
     await testRunner.AndAsync("no exception is thrown", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -203,7 +203,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 24
-    await testRunner.ThenAsync("a CreateMatch gRPC call is made with white \"user-a\" and black \"user-b\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("a create-match call is made with white \"user-a\" and black \"user-b\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 25
     await testRunner.AndAsync("\"t1\" is marked matched with user \"user-a\" and match \"match-xyz\"", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -249,7 +249,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 34
-    await testRunner.ThenAsync("no CreateMatch gRPC call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("no create-match call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 35
     await testRunner.AndAsync("a warning is logged", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -298,7 +298,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.WhenAsync("the matching service processes the \"5+0\" queue", ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 45
-    await testRunner.ThenAsync("no CreateMatch gRPC call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync("no create-match call is made", ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
 #line 46
     await testRunner.AndAsync("a warning is logged", ((string)(null)), ((global::Reqnroll.Table)(null)), "And ");
@@ -405,23 +405,19 @@ namespace MaichessMatchMakerService.Tests.Features
             await this.ScenarioCleanupAsync();
         }
         
-        [Xunit.SkippableTheoryAttribute(DisplayName="Each time format id resolves to its registry preset on the gRPC request")]
+        [Xunit.SkippableTheoryAttribute(DisplayName="The queue\'s time format id is forwarded to the create-match call")]
         [Xunit.TraitAttribute("FeatureTitle", "MatchingService — background match-making logic")]
-        [Xunit.TraitAttribute("Description", "Each time format id resolves to its registry preset on the gRPC request")]
-        [Xunit.InlineDataAttribute("1+0", "60000", "0", new string[0])]
-        [Xunit.InlineDataAttribute("3+0", "180000", "0", new string[0])]
-        [Xunit.InlineDataAttribute("5+0", "300000", "0", new string[0])]
-        [Xunit.InlineDataAttribute("5+3", "300000", "3000", new string[0])]
-        [Xunit.InlineDataAttribute("10+5", "600000", "5000", new string[0])]
-        [Xunit.InlineDataAttribute("30+20", "1800000", "20000", new string[0])]
-        public async System.Threading.Tasks.Task EachTimeFormatIdResolvesToItsRegistryPresetOnTheGRPCRequest(string timeFormatId, string baseMs, string incrementMs, string[] exampleTags)
+        [Xunit.TraitAttribute("Description", "The queue\'s time format id is forwarded to the create-match call")]
+        [Xunit.InlineDataAttribute("1+0", new string[0])]
+        [Xunit.InlineDataAttribute("5+0", new string[0])]
+        [Xunit.InlineDataAttribute("5+3", new string[0])]
+        [Xunit.InlineDataAttribute("30+20", new string[0])]
+        public async System.Threading.Tasks.Task TheQueuesTimeFormatIdIsForwardedToTheCreate_MatchCall(string timeFormatId, string[] exampleTags)
         {
             string[] tagsOfScenario = exampleTags;
             System.Collections.Specialized.OrderedDictionary argumentsOfScenario = new System.Collections.Specialized.OrderedDictionary();
             argumentsOfScenario.Add("timeFormatId", timeFormatId);
-            argumentsOfScenario.Add("baseMs", baseMs);
-            argumentsOfScenario.Add("incrementMs", incrementMs);
-            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("Each time format id resolves to its registry preset on the gRPC request", null, tagsOfScenario, argumentsOfScenario, featureTags);
+            global::Reqnroll.ScenarioInfo scenarioInfo = new global::Reqnroll.ScenarioInfo("The queue\'s time format id is forwarded to the create-match call", null, tagsOfScenario, argumentsOfScenario, featureTags);
 #line 70
   this.ScenarioInitialize(scenarioInfo);
 #line hidden
@@ -451,7 +447,7 @@ namespace MaichessMatchMakerService.Tests.Features
     await testRunner.WhenAsync(string.Format("the matching service processes the \"{0}\" queue", timeFormatId), ((string)(null)), ((global::Reqnroll.Table)(null)), "When ");
 #line hidden
 #line 77
-    await testRunner.ThenAsync(string.Format("the CreateMatch request uses time format id \"{0}\" with base {1} and increment {2}", timeFormatId, baseMs, incrementMs), ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
+    await testRunner.ThenAsync(string.Format("the create-match call uses time format id \"{0}\"", timeFormatId), ((string)(null)), ((global::Reqnroll.Table)(null)), "Then ");
 #line hidden
             }
             await this.ScenarioCleanupAsync();

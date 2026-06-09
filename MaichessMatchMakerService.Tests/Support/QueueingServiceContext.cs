@@ -12,6 +12,9 @@ internal sealed class QueueingServiceContext
 {
     internal IQueueRepository Queue { get; } = Substitute.For<IQueueRepository>();
 
+    // Human-vs-bot creation goes through the IMatchCreator seam; bot-vs-bot stays on the gRPC client.
+    internal FakeMatchCreator Creator { get; } = new FakeMatchCreator();
+
     internal Matches.MatchesClient MatchesClient { get; } = Substitute.For<Matches.MatchesClient>();
 
     internal SocketNotifier SocketNotifier { get; } =
@@ -31,7 +34,7 @@ internal sealed class QueueingServiceContext
 
     internal QueueingServiceContext()
     {
-        Service = new QueueingService(Queue, MatchesClient, SocketNotifier);
+        Service = new QueueingService(Queue, Creator, MatchesClient, SocketNotifier);
     }
 
     internal void SetupUserNotInQueue(string userId)
@@ -57,6 +60,10 @@ internal sealed class QueueingServiceContext
 
     internal void SetupMatchManagerSuccess(string matchId)
     {
+        // Human-vs-bot resolves through the creator; bot-vs-bot through the gRPC client. Configure
+        // both so a single Given step serves whichever path the scenario exercises.
+        Creator.ReturnsMatch(matchId);
+
         var response = new CreateMatchResponse { Match = new Match { Id = matchId } };
         MatchesClient
             .CreateMatchAsync(

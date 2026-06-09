@@ -32,6 +32,7 @@
     <ItemGroup>
         <EmbeddedResource Include="Kafka/socket.outbound.v1.avsc" />
         <EmbeddedResource Include="Kafka/matchmaking.events.v1.avsc" />
+        <EmbeddedResource Include="Kafka/match.commands.v1.avsc" />
     </ItemGroup>
 
     <ItemGroup>

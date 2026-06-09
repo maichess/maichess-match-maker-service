@@ -1,5 +1,3 @@
-using Grpc.Core;
-using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Queue;
 using MaichessMatchMakerService.Tests.Support;
 using NSubstitute;
@@ -51,9 +49,9 @@ public sealed class SkillPairingTests
 
         await ctx.MatchingService.TryMatchAsync(Tf, ctx.CancellationSource.Token);
 
-        Assert.NotNull(ctx.LastCreateMatchRequest);
-        Assert.Equal("uB", ctx.LastCreateMatchRequest!.White.UserId);
-        Assert.Equal("uC", ctx.LastCreateMatchRequest.Black.UserId);
+        Assert.NotNull(ctx.Creator.LastCall);
+        Assert.Equal("uB", ctx.Creator.LastCall!.Value.White.UserId);
+        Assert.Equal("uC", ctx.Creator.LastCall.Value.Black.UserId);
         await ctx.Queue.DidNotReceive().DequeueOldestPairAsync(Arg.Any<string>());
     }
 
@@ -73,8 +71,8 @@ public sealed class SkillPairingTests
 
         await ctx.MatchingService.TryMatchAsync(Tf, ctx.CancellationSource.Token);
 
-        Assert.Equal("uA", ctx.LastCreateMatchRequest!.White.UserId);
-        Assert.Equal("uC", ctx.LastCreateMatchRequest.Black.UserId);
+        Assert.Equal("uA", ctx.Creator.LastCall!.Value.White.UserId);
+        Assert.Equal("uC", ctx.Creator.LastCall.Value.Black.UserId);
     }
 
     [Fact]
@@ -92,7 +90,7 @@ public sealed class SkillPairingTests
         await ctx.MatchingService.TryMatchAsync(Tf, ctx.CancellationSource.Token);
 
         await ctx.Queue.Received(1).DequeueOldestPairAsync(Tf);
-        Assert.Equal("uX", ctx.LastCreateMatchRequest!.White.UserId);
+        Assert.Equal("uX", ctx.Creator.LastCall!.Value.White.UserId);
     }
 
     [Fact]
@@ -112,6 +110,6 @@ public sealed class SkillPairingTests
         await ctx.MatchingService.TryMatchAsync(Tf, ctx.CancellationSource.Token);
 
         await ctx.Queue.Received(1).DequeueOldestPairAsync(Tf);
-        Assert.Equal("uX", ctx.LastCreateMatchRequest!.White.UserId);
+        Assert.Equal("uX", ctx.Creator.LastCall!.Value.White.UserId);
     }
 }

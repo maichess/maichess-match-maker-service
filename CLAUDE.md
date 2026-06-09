@@ -1,6 +1,6 @@
 # Match Maker Service
 
-Handles session initialisation. Queues players looking for human opponents and pairs them by time control (and skill when the pool is large enough). Bot matches resolve immediately. Once an opponent is found, calls `Matches.CreateMatch` on Match Manager via gRPC and returns the resulting `match_id` to the client.
+Handles session initialisation. Queues players looking for human opponents and pairs them by time control (and skill when the pool is large enough). Bot matches resolve immediately. Once an opponent is found, a match is created through the `IMatchCreator` seam (`Queue/`) and the resulting `match_id` is returned to the client.
 
 ## Contracts
 
@@ -47,7 +47,15 @@ Two keys per queued player:
 
 - Match players with the same `time_control` only.
 - When the queue for a given time control has ≥ 10 waiting players, pair by closest ELO; otherwise pair by longest wait (FIFO). Live ratings come from the **Streamiz user-ratings KTable** (`Streaming/`, fed by `user.events.v1`), read locally via interactive queries (`IUserRatingStore`) — no `GetUser` RPC. `MatchingService.ClosestRatedPair` picks the minimum-gap pair; flagged/unrated players are excluded and a lost race (`DequeueSpecificPairAsync` returns false) falls back to FIFO. See `maichess-knowledge-base/caching-and-read-models.md` (Stage 3) and `README.md`.
-- Bot matches skip the queue entirely: call `Matches.CreateMatch` immediately and return `match_id` directly in the `POST /queue` response.
+- Bot matches skip the queue entirely: create the match immediately and return `match_id` directly in the `POST /queue` response.
+
+## Match creation transport (`IMatchCreator`)
+
+Human-vs-human and human-vs-bot creation goes through the `Queue/IMatchCreator` seam, chosen at startup by the `Socket:Transport` setting (mirrors `IMatchmakingNotifier`):
+- `KafkaMatchCreator` (default, `kafka`): mints the `match_id`, publishes a `CreateMatchCommand` to `match.commands.v1` (Avro, fire-and-forget), and returns the minted id immediately. Match Manager's command consumer materialises the document with that caller-minted id — so an immediate read of a brand-new match can briefly 404 (accepted; the client uses optimistic UI + socket/poll confirmation).
+- `GrpcMatchCreator` (`grpc`, and wherever Kafka is off such as prod): the legacy synchronous `Matches.CreateMatch` gRPC call, returning the server-assigned id.
+
+**Bot-vs-bot is not routed through the seam** — `QueueingService.CreateBotVsBotMatchAsync` stays on synchronous gRPC `Matches.CreateMatch` because it needs synchronous `start_fen` validation to return `invalid start_fen` to the caller. The `Matches.MatchesClient` gRPC client therefore remains wired regardless of transport.
 
 ## Code Style
 

@@ -1,5 +1,4 @@
 using Grpc.Core;
-using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Tests.Support;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -86,14 +85,10 @@ internal sealed class MatchingServiceSteps(MatchingServiceContext context)
 
     // ── Then ─────────────────────────────────────────────────────────────────
 
-    [Then(@"no CreateMatch gRPC call is made")]
+    [Then(@"no create-match call is made")]
     public void ThenNoCreateMatchCallMade()
     {
-        context.MatchesClient.DidNotReceive().CreateMatchAsync(
-            Arg.Any<CreateMatchRequest>(),
-            Arg.Any<Metadata>(),
-            Arg.Any<DateTime?>(),
-            Arg.Any<CancellationToken>());
+        Assert.Empty(context.Creator.Calls);
     }
 
     [Then(@"no dequeue is attempted")]
@@ -108,12 +103,12 @@ internal sealed class MatchingServiceSteps(MatchingServiceContext context)
         Assert.Null(context.LastException);
     }
 
-    [Then(@"a CreateMatch gRPC call is made with white ""([^""]*)"" and black ""([^""]*)""")]
+    [Then(@"a create-match call is made with white ""([^""]*)"" and black ""([^""]*)""")]
     public void ThenCreateMatchCallMadeWithPlayers(string white, string black)
     {
-        Assert.NotNull(context.LastCreateMatchRequest);
-        Assert.Equal(white, context.LastCreateMatchRequest.White.UserId);
-        Assert.Equal(black, context.LastCreateMatchRequest.Black.UserId);
+        Assert.NotNull(context.Creator.LastCall);
+        Assert.Equal(white, context.Creator.LastCall.Value.White.UserId);
+        Assert.Equal(black, context.Creator.LastCall.Value.Black.UserId);
     }
 
     [Then(@"""([^""]*)"" is marked matched with user ""([^""]*)"" and match ""([^""]*)""")]
@@ -154,13 +149,10 @@ internal sealed class MatchingServiceSteps(MatchingServiceContext context)
         Assert.IsType<RpcException>(context.LastException);
     }
 
-    [Then(@"the CreateMatch request uses time format id ""([^""]*)"" with base (\d+) and increment (\d+)")]
-    public void ThenCreateMatchRequestUsesTimeFormat(string id, long baseMs, long incrementMs)
+    [Then(@"the create-match call uses time format id ""([^""]*)""")]
+    public void ThenCreateMatchCallUsesTimeFormat(string id)
     {
-        Assert.NotNull(context.LastCreateMatchRequest);
-        TimeFormat tf = context.LastCreateMatchRequest.TimeFormat;
-        Assert.Equal(id, tf.Id);
-        Assert.Equal(baseMs, tf.BaseMs);
-        Assert.Equal(incrementMs, tf.IncrementMs);
+        Assert.NotNull(context.Creator.LastCall);
+        Assert.Equal(id, context.Creator.LastCall.Value.TimeFormatId);
     }
 }

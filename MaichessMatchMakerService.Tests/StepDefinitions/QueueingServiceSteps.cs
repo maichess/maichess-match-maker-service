@@ -144,12 +144,12 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
             Arg.Any<string>(), userId, timeFormatId);
     }
 
-    [Then(@"the CreateMatch gRPC request has white userId ""([^""]*)"" and black botId ""([^""]*)""")]
-    public void ThenGrpcRequestHasCorrectPlayers(string userId, string botId)
+    [Then(@"the create-match call has white userId ""([^""]*)"" and black botId ""([^""]*)""")]
+    public void ThenCreateCallHasCorrectPlayers(string userId, string botId)
     {
-        Assert.NotNull(context.LastCreateMatchRequest);
-        Assert.Equal(userId, context.LastCreateMatchRequest.White.UserId);
-        Assert.Equal(botId, context.LastCreateMatchRequest.Black.BotId);
+        Assert.NotNull(context.Creator.LastCall);
+        Assert.Equal(userId, context.Creator.LastCall.Value.White.UserId);
+        Assert.Equal(botId, context.Creator.LastCall.Value.Black.BotId);
     }
 
     [Then(@"the CreateMatch gRPC request has white botId ""([^""]*)"" and black botId ""([^""]*)""")]
@@ -181,14 +181,11 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
             Arg.Any<string>(), userId, timeFormatId, matchId);
     }
 
-    [Then(@"the CreateMatch request uses time format id ""([^""]*)"" with base (\d+) and increment (\d+)")]
-    public void ThenGrpcRequestUsesTimeFormat(string id, long baseMs, long incrementMs)
+    [Then(@"the create-match call uses time format id ""([^""]*)""")]
+    public void ThenCreateCallUsesTimeFormat(string id)
     {
-        Assert.NotNull(context.LastCreateMatchRequest);
-        TimeFormat tf = context.LastCreateMatchRequest.TimeFormat;
-        Assert.Equal(id, tf.Id);
-        Assert.Equal(baseMs, tf.BaseMs);
-        Assert.Equal(incrementMs, tf.IncrementMs);
+        Assert.NotNull(context.Creator.LastCall);
+        Assert.Equal(id, context.Creator.LastCall.Value.TimeFormatId);
     }
 
     [Then(@"the get status result is not found")]

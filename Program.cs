@@ -45,10 +45,12 @@ string socketTransport = builder.Configuration["Socket:Transport"] ?? "kafka";
 if (string.Equals(socketTransport, "grpc", StringComparison.OrdinalIgnoreCase))
 {
     builder.Services.AddSingleton<IMatchmakingNotifier, SocketNotifier>();
+    builder.Services.AddSingleton<IMatchCreator, GrpcMatchCreator>();
 }
 else
 {
     builder.Services.AddSingleton<IMatchmakingNotifier, KafkaMatchmakingNotifier>();
+    builder.Services.AddSingleton<IMatchCreator, KafkaMatchCreator>();
 }
 
 // Streamiz: the single user-rating KTable + co-partitioned join, hosting skill-based

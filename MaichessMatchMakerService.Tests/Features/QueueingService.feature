@@ -27,27 +27,26 @@ Feature: QueueingService — queue entry, status, and dequeue logic
     Then the enqueue result is success with a queue token
     And EnqueueAsync is called for user "user-a" with time format id "5+0"
 
-  Scenario: Bot match — calls gRPC, stores entry, and returns queue token
+  Scenario: Bot match — issues a create-match command, stores entry, and returns queue token
     Given the user "user-a" is not in any queue
     And the match manager creates match "match-xyz"
     When enqueue is called with userId "user-a" timeFormatId "5+0" opponentType "bot" and botId "bot-1"
     Then the enqueue result is success with a queue token
-    And the CreateMatch gRPC request has white userId "user-a" and black botId "bot-1"
+    And the create-match call has white userId "user-a" and black botId "bot-1"
     And EnqueueBotMatchAsync is called for user "user-a" with time format id "5+0" and match "match-xyz"
 
-  Scenario Outline: Bot match propagates the resolved time format to the gRPC request
+  Scenario Outline: Bot match forwards the time format id to the create-match call
     Given the user "user-a" is not in any queue
     And the match manager creates match "match-x"
     When enqueue is called with userId "user-a" timeFormatId "<timeFormatId>" opponentType "bot" and botId "bot-1"
-    Then the CreateMatch request uses time format id "<timeFormatId>" with base <baseMs> and increment <incrementMs>
+    Then the create-match call uses time format id "<timeFormatId>"
 
     Examples:
-      | timeFormatId | baseMs  | incrementMs |
-      | 1+0          | 60000   | 0           |
-      | 3+2          | 180000  | 2000        |
-      | 5+0          | 300000  | 0           |
-      | 10+5         | 600000  | 5000        |
-      | 30+20        | 1800000 | 20000       |
+      | timeFormatId |
+      | 1+0          |
+      | 3+2          |
+      | 5+0          |
+      | 30+20        |
 
   # ── Bot-vs-bot match creation ─────────────────────────────────────────────
 

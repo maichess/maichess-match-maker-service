@@ -64,7 +64,6 @@ public sealed class UserRatingTopologyTests
         Assert.Equal("u1", record.Message.Key);
         Assert.Equal("tok-1", record.Message.Value.QueueToken);
         Assert.Equal(1500, record.Message.Value.Rating);
-        Assert.False(record.Message.Value.Flagged);
     }
 
     [Fact]

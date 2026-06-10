@@ -59,6 +59,13 @@ builder.Services.AddSingleton<MatchMakerStreams>();
 builder.Services.AddSingleton<IUserRatingStore>(sp => sp.GetRequiredService<MatchMakerStreams>());
 builder.Services.AddHostedService(sp => sp.GetRequiredService<MatchMakerStreams>());
 
+// Anti-cheat flag read model: in-memory store materialised from the compacted
+// cheat.events.v1 topic; the matchmaking toggle reads it locally per pairing pass.
+// See knowledge/services/anticheat-service.md.
+builder.Services.AddSingleton<CheatFlagStore>();
+builder.Services.AddSingleton<ICheatFlagStore>(sp => sp.GetRequiredService<CheatFlagStore>());
+builder.Services.AddHostedService<CheatFlagConsumer>();
+
 // Queue service and background matching worker
 builder.Services.AddSingleton<QueueingService>();
 builder.Services.AddSingleton<MatchingService>();

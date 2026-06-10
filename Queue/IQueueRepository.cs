@@ -2,7 +2,7 @@ namespace MaichessMatchMakerService.Queue;
 
 internal interface IQueueRepository
 {
-    Task EnqueueAsync(string queueToken, string userId, string timeFormatId);
+    Task EnqueueAsync(string queueToken, string userId, string timeFormatId, bool allowFlagged);
 
     Task EnqueueBotMatchAsync(string queueToken, string userId, string timeFormatId, string matchId);
 
@@ -16,11 +16,9 @@ internal interface IQueueRepository
 
     Task<long> GetQueueCountAsync(string timeFormatId);
 
-    Task<string[]> DequeueOldestPairAsync(string timeFormatId);
-
-    // Waiting (token, userId) pairs for skill-based pairing — read without dequeuing so
-    // ratings can be compared before two are chosen.
-    Task<IReadOnlyList<(string Token, string UserId)>> GetWaitingPlayersAsync(string timeFormatId);
+    // Waiting players oldest-first (token, userId, anti-cheat toggle) — read without
+    // dequeuing so admissibility and ratings can be evaluated before two are chosen.
+    Task<IReadOnlyList<(string Token, string UserId, bool AllowFlagged)>> GetWaitingPlayersAsync(string timeFormatId);
 
     // Atomically removes exactly the two named tokens from the queue. Returns false if
     // either was already taken (a concurrent match), so the caller can fall back.

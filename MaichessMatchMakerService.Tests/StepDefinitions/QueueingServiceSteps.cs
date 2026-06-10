@@ -63,7 +63,7 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
     {
         string? nullableBotId = string.IsNullOrEmpty(botId) ? null : botId;
         context.EnqueueResult = await context.Service.EnqueueAsync(
-            userId, timeFormatId, opponentType, nullableBotId, context.CancellationSource.Token);
+            userId, timeFormatId, opponentType, nullableBotId, allowFlagged: false, context.CancellationSource.Token);
     }
 
     [When(@"a bot-vs-bot match is created with white ""([^""]*)"" black ""([^""]*)"" time format ""([^""]*)""")]
@@ -141,7 +141,7 @@ internal sealed class QueueingServiceSteps(QueueingServiceContext context)
     public async Task ThenEnqueueAsyncIsCalled(string userId, string timeFormatId)
     {
         await context.Queue.Received(1).EnqueueAsync(
-            Arg.Any<string>(), userId, timeFormatId);
+            Arg.Any<string>(), userId, timeFormatId, Arg.Any<bool>());
     }
 
     [Then(@"the create-match call has white userId ""([^""]*)"" and black botId ""([^""]*)""")]

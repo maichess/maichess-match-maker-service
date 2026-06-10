@@ -46,7 +46,7 @@ public sealed class MatchmakingAvroToProtoTests
         MatchmakingEvent evt = MatchmakingAvroToProto.Map(AvroTestData.PlayerEnqueued("p3", "tok-3", "10+0"));
 
         Assert.True(EnqueueReader.IsPlayerEnqueued(evt));
-        SkillEnrichedEnqueue enriched = EnqueueReader.Enrich(evt, new UserRatingState(1400, 60, false, true));
+        SkillEnrichedEnqueue enriched = EnqueueReader.Enrich(evt, new UserRatingState(1400, 60, true));
         Assert.Equal("p3", enriched.PlayerId);
         Assert.Equal("10+0", enriched.TimeFormatId);
         Assert.Equal(1400, enriched.Rating);

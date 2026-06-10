@@ -8,5 +8,4 @@ internal sealed record SkillEnrichedEnqueue(
     string PlayerId,
     string QueueToken,
     string TimeFormatId,
-    double Rating,
-    bool Flagged);
+    double Rating);

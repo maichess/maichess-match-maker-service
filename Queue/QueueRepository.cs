@@ -8,7 +8,7 @@ internal sealed class QueueRepository(IConnectionMultiplexer redis) : IQueueRepo
 {
     private IDatabase Db => redis.GetDatabase();
 
-    public async Task EnqueueAsync(string queueToken, string userId, string timeFormatId)
+    public async Task EnqueueAsync(string queueToken, string userId, string timeFormatId, bool allowFlagged)
     {
         double score = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
@@ -19,6 +19,7 @@ internal sealed class QueueRepository(IConnectionMultiplexer redis) : IQueueRepo
                 new HashEntry("user_id", userId),
                 new HashEntry("time_format_id", timeFormatId),
                 new HashEntry("status", "waiting"),
+                new HashEntry("allow_flagged", allowFlagged ? "true" : "false"),
             ]);
         _ = tx.SortedSetAddAsync(QueueKey(timeFormatId), queueToken, score);
         _ = tx.StringSetAsync(UserKey(userId), queueToken);
@@ -85,23 +86,17 @@ internal sealed class QueueRepository(IConnectionMultiplexer redis) : IQueueRepo
     public async Task<long> GetQueueCountAsync(string timeFormatId) =>
         await Db.SortedSetLengthAsync(QueueKey(timeFormatId));
 
-    public async Task<string[]> DequeueOldestPairAsync(string timeFormatId)
-    {
-        SortedSetEntry[] entries = await Db.SortedSetPopAsync(QueueKey(timeFormatId), count: 2);
-        return entries.Select(e => (string)e.Element!).ToArray();
-    }
-
-    public async Task<IReadOnlyList<(string Token, string UserId)>> GetWaitingPlayersAsync(string timeFormatId)
+    public async Task<IReadOnlyList<(string Token, string UserId, bool AllowFlagged)>> GetWaitingPlayersAsync(string timeFormatId)
     {
         RedisValue[] tokens = await Db.SortedSetRangeByRankAsync(QueueKey(timeFormatId));
 
-        var players = new List<(string Token, string UserId)>(tokens.Length);
+        var players = new List<(string Token, string UserId, bool AllowFlagged)>(tokens.Length);
         foreach (RedisValue token in tokens)
         {
-            RedisValue userId = await Db.HashGetAsync(EntryKey((string)token!), "user_id");
-            if (userId.HasValue)
+            RedisValue[] fields = await Db.HashGetAsync(EntryKey((string)token!), ["user_id", "allow_flagged"]);
+            if (fields[0].HasValue)
             {
-                players.Add(((string)token!, (string)userId!));
+                players.Add(((string)token!, (string)fields[0]!, fields[1] == "true"));
             }
         }
 
@@ -137,6 +132,7 @@ internal sealed class QueueRepository(IConnectionMultiplexer redis) : IQueueRepo
             dict.GetValueOrDefault("user_id") ?? string.Empty,
             dict.GetValueOrDefault("time_format_id") ?? string.Empty,
             dict.GetValueOrDefault("status") == "matched" ? QueueStatus.Matched : QueueStatus.Waiting,
-            dict.GetValueOrDefault("match_id"));
+            dict.GetValueOrDefault("match_id"),
+            dict.GetValueOrDefault("allow_flagged") == "true");
     }
 }

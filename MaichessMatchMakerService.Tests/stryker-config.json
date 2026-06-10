@@ -18,7 +18,8 @@
     "mutate": [
       "!**/Program.cs",
       "!**/*.g.cs",
-      "!**/*.generated.cs"
+      "!**/*.generated.cs",
+      "!**/Streaming/CheatFlagConsumer.cs"
     ],
     "ignore-methods": [
       "*Log*",

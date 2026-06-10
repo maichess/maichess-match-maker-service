@@ -6,8 +6,8 @@ namespace MaichessMatchMakerService.Streaming;
 // The KTable aggregator that folds each user.events.v1 envelope into the running
 // UserRatingState. Only RatingUpdated carries a rating, so other event types leave the
 // accumulated rating untouched (a plain compacted MapValues of the latest event would
-// otherwise clobber a rating with a profile-only update). flagged has no source on
-// user.events yet (arrives via cheat.events in a later stage), so it is carried through.
+// otherwise clobber a rating with a profile-only update). The anti-cheat flag is not a
+// user.events fact — it lives in the CheatFlagStore fed by cheat.events.v1.
 internal static class UserEventReader
 {
     internal static UserRatingState Apply(UserRatingState current, GenericRecord envelope) =>

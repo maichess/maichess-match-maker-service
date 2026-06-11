@@ -12,7 +12,7 @@ namespace MaichessMatchMakerService.Tests.Streaming;
 // The single Streamiz KTable + co-partitioned stream-table join, driven through
 // Streamiz's TopologyTestDriver. Asserts the join enriches an enqueue with the KTable's
 // live rating, materialises the rating store, and excludes enqueues for users the KTable
-// does not know (inner-join semantics). See feature-prompts/11 + caching-and-read-models.md.
+// does not know (inner-join semantics). Both topics carry raw Protobuf (Kafka task 09).
 public sealed class UserRatingTopologyTests
 {
     private static readonly TimeSpan ReadTimeout = TimeSpan.FromSeconds(5);
@@ -28,7 +28,7 @@ public sealed class UserRatingTopologyTests
         var builder = new StreamBuilder();
         UserRatingTopology.Build(
             builder,
-            new AvroTestSerDes(AvroTestData.UserEvents),
+            new ProtoTestSerDes<UserEvent>(),
             new ProtoTestSerDes<MatchmakingEvent>(),
             inMemoryStore: true);
 
@@ -38,8 +38,8 @@ public sealed class UserRatingTopologyTests
     [Fact]
     public void BuildDefault_BuildsTopologyWithRocksDbStore()
     {
-        // Exercises the production wiring (RocksDb store + Schema Registry serdes); the
-        // graph is built but not run, so no broker/registry is needed.
+        // Exercises the production wiring (RocksDb store + raw-Protobuf serdes); the
+        // graph is built but not run, so no broker is needed.
         var builder = new StreamBuilder();
         UserRatingTopology.BuildDefault(builder);
 
@@ -51,13 +51,13 @@ public sealed class UserRatingTopologyTests
     {
         using TopologyTestDriver driver = BuildDriver();
         var users = driver.CreateInputTopic(
-            UserRatingTopology.UserEventsTopic, new StringSerDes(), new AvroTestSerDes(AvroTestData.UserEvents));
+            UserRatingTopology.UserEventsTopic, new StringSerDes(), new ProtoTestSerDes<UserEvent>());
         var enqueues = driver.CreateInputTopic(
             UserRatingTopology.MatchmakingEventsTopic, new StringSerDes(), new ProtoTestSerDes<MatchmakingEvent>());
         var enriched = driver.CreateOutputTopic(
             UserRatingTopology.EnrichedTopic, ReadTimeout, new StringSerDes(), new PocoJsonSerDes<SkillEnrichedEnqueue>());
 
-        users.PipeInput("u1", AvroTestData.RatingUpdated("u1", 1500));
+        users.PipeInput("u1", ProtoTestData.RatingUpdated("u1", 1500));
         enqueues.PipeInput("u1", ProtoTestData.PlayerEnqueued("u1", "tok-1", "5+0"));
 
         var record = enriched.ReadKeyValue();
@@ -72,13 +72,13 @@ public sealed class UserRatingTopologyTests
     {
         using TopologyTestDriver driver = BuildDriver();
         var users = driver.CreateInputTopic(
-            UserRatingTopology.UserEventsTopic, new StringSerDes(), new AvroTestSerDes(AvroTestData.UserEvents));
+            UserRatingTopology.UserEventsTopic, new StringSerDes(), new ProtoTestSerDes<UserEvent>());
 
         // A profile-only snapshot then a rating: the aggregate must keep the rating, and a
         // later rating update must win.
-        users.PipeInput("u1", AvroTestData.UserRegistered("u1", "alice"));
-        users.PipeInput("u1", AvroTestData.RatingUpdated("u1", 1500));
-        users.PipeInput("u1", AvroTestData.RatingUpdated("u1", 1612));
+        users.PipeInput("u1", ProtoTestData.UserRegistered("u1", "alice"));
+        users.PipeInput("u1", ProtoTestData.RatingUpdated("u1", 1500));
+        users.PipeInput("u1", ProtoTestData.RatingUpdated("u1", 1612));
 
         IReadOnlyKeyValueStore<string, UserRatingState> store =
             driver.GetKeyValueStore<string, UserRatingState>(UserRatingTopology.StoreName);
@@ -108,13 +108,13 @@ public sealed class UserRatingTopologyTests
     {
         using TopologyTestDriver driver = BuildDriver();
         var users = driver.CreateInputTopic(
-            UserRatingTopology.UserEventsTopic, new StringSerDes(), new AvroTestSerDes(AvroTestData.UserEvents));
+            UserRatingTopology.UserEventsTopic, new StringSerDes(), new ProtoTestSerDes<UserEvent>());
         var enqueues = driver.CreateInputTopic(
             UserRatingTopology.MatchmakingEventsTopic, new StringSerDes(), new ProtoTestSerDes<MatchmakingEvent>());
         var enriched = driver.CreateOutputTopic(
             UserRatingTopology.EnrichedTopic, ReadTimeout, new StringSerDes(), new PocoJsonSerDes<SkillEnrichedEnqueue>());
 
-        users.PipeInput("u1", AvroTestData.RatingUpdated("u1", 1500));
+        users.PipeInput("u1", ProtoTestData.RatingUpdated("u1", 1500));
         enqueues.PipeInput("u1", ProtoTestData.PlayerDequeued("u1", "tok-1"));
 
         Assert.Empty(enriched.ReadKeyValueList());

@@ -56,4 +56,41 @@ internal static class ProtoTestData
         Producer = "test",
         PlayerDequeued = new PlayerDequeued { PlayerId = playerId, QueueToken = queueToken },
     };
+
+    internal static UserEvent RatingUpdated(string userId, double rating, double rd = 200) => new()
+    {
+        EventId = Guid.NewGuid().ToString(),
+        EventType = "user.RatingUpdated",
+        AggregateId = userId,
+        OccurredAt = 0,
+        Producer = "test",
+        RatingUpdated = new RatingUpdated
+        {
+            UserId = userId,
+            Rating = rating,
+            RatingDeviation = rd,
+            Volatility = 0.06,
+            Elo = (int)rating,
+        },
+    };
+
+    internal static UserEvent UserRegistered(string userId, string username) => new()
+    {
+        EventId = Guid.NewGuid().ToString(),
+        EventType = "user.UserRegistered",
+        AggregateId = userId,
+        OccurredAt = 0,
+        Producer = "test",
+        UserRegistered = new UserRegistered { UserId = userId, Username = username },
+    };
+
+    // A user.events envelope with no payload set (PayloadCase = None).
+    internal static UserEvent NoPayloadUserEvent() => new()
+    {
+        EventId = "e",
+        EventType = "user.UserRegistered",
+        AggregateId = "u1",
+        OccurredAt = 0,
+        Producer = "test",
+    };
 }

@@ -17,7 +17,8 @@ skill-based pairing reads ratings locally instead of calling `GetUser`.
   `match-maker-user-ratings-user-ratings-store-changelog`.
 - **Co-partition requirement:** `matchmaking.events.v1` and `user.events.v1` must share
   partition count (both 3 in the chart) for the join.
-- **Config:** `KAFKA_BOOTSTRAP`, `SCHEMA_REGISTRY_URL`, `STREAMIZ_STATE_DIR`.
+- **Config:** `KAFKA_BOOTSTRAP`, `STREAMIZ_STATE_DIR`. (Kafka task 09 removed the Confluent Schema
+  Registry — events are raw Protobuf bytes, so there is no `SCHEMA_REGISTRY_URL`.)
 - **Tests:** the topology is unit-tested with Streamiz's `TopologyTestDriver`
   (`MaichessMatchMakerService.Tests/Streaming`).
 

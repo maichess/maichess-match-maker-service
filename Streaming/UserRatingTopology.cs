@@ -1,8 +1,6 @@
-using Avro.Generic;
 using Maichess.Events.V1;
 using Streamiz.Kafka.Net;
 using Streamiz.Kafka.Net.Crosscutting;
-using Streamiz.Kafka.Net.SchemaRegistry.SerDes.Avro;
 using Streamiz.Kafka.Net.SerDes;
 using Streamiz.Kafka.Net.State;
 using Streamiz.Kafka.Net.Table;
@@ -26,12 +24,13 @@ internal static class UserRatingTopology
     internal const string MatchmakingEventsTopic = "matchmaking.events.v1";
     internal const string EnrichedTopic = "matchmaking.skill.v1";
 
-    // Production wires SchemaAvroSerDes for user.events and the dual-read
-    // MatchmakingEventSerDes for matchmaking.events; see BuildDefault. Tests inject
-    // registry-free serdes so the join can run under TopologyTestDriver.
+    // Both topics carry raw Protobuf bytes (Kafka task 09 removed the Schema Registry),
+    // so user.events folds UserEvent and matchmaking.events folds MatchmakingEvent via
+    // ProtobufSerDes; see BuildDefault. The serdes are injectable so the join can run
+    // under TopologyTestDriver.
     internal static void Build(
         StreamBuilder builder,
-        ISerDes<GenericRecord> userEventSerdes,
+        ISerDes<UserEvent> userEventSerdes,
         ISerDes<MatchmakingEvent> matchmakingSerdes,
         bool inMemoryStore = false)
     {
@@ -58,5 +57,5 @@ internal static class UserRatingTopology
     }
 
     internal static void BuildDefault(StreamBuilder builder) =>
-        Build(builder, new SchemaAvroSerDes<GenericRecord>(), new MatchmakingEventSerDes());
+        Build(builder, new ProtobufSerDes<UserEvent>(), new ProtobufSerDes<MatchmakingEvent>());
 }

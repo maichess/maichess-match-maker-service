@@ -1,10 +1,7 @@
 using Grpc.Core;
 using Maichess.MatchManager.V1;
 using MaichessMatchMakerService.Queue;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-
-using SocketSvc = Socket.V1.Socket;
 
 namespace MaichessMatchMakerService.Tests.Support;
 
@@ -17,8 +14,7 @@ internal sealed class QueueingServiceContext
 
     internal Matches.MatchesClient MatchesClient { get; } = Substitute.For<Matches.MatchesClient>();
 
-    internal SocketNotifier SocketNotifier { get; } =
-        new SocketNotifier(Substitute.For<SocketSvc.SocketClient>(), NullLogger<SocketNotifier>.Instance);
+    internal IMatchmakingNotifier Notifier { get; } = Substitute.For<IMatchmakingNotifier>();
 
     internal QueueingService Service { get; }
 
@@ -34,7 +30,7 @@ internal sealed class QueueingServiceContext
 
     internal QueueingServiceContext()
     {
-        Service = new QueueingService(Queue, Creator, MatchesClient, SocketNotifier);
+        Service = new QueueingService(Queue, Creator, MatchesClient, Notifier);
     }
 
     internal void SetupUserNotInQueue(string userId)

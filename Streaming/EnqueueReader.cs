@@ -4,8 +4,7 @@ namespace MaichessMatchMakerService.Streaming;
 
 // Pure reads over a matchmaking.events.v1 envelope and the value-joiner that tags a
 // PlayerEnqueued event with the joined KTable rating. The topology's in-memory value
-// type is the Protobuf MatchmakingEvent (Kafka task 02 migrated this topic off Avro);
-// the dual-read SerDes maps any still-on-topic Avro message into the same proto type.
+// type is the Protobuf MatchmakingEvent, read as raw Protobuf bytes (Kafka task 09).
 internal static class EnqueueReader
 {
     internal static bool IsPlayerEnqueued(MatchmakingEvent envelope) =>

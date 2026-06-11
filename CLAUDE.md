@@ -51,11 +51,17 @@ Two keys per queued player:
 
 ## Match creation transport (`IMatchCreator`)
 
-Human-vs-human and human-vs-bot creation goes through the `Queue/IMatchCreator` seam, chosen at startup by the `Socket:Transport` setting (mirrors `IMatchmakingNotifier`):
-- `KafkaMatchCreator` (default, `kafka`): mints the `match_id`, publishes a `CreateMatchCommand` to `match.commands.v1` (Avro, fire-and-forget), and returns the minted id immediately. Match Manager's command consumer materialises the document with that caller-minted id — so an immediate read of a brand-new match can briefly 404 (accepted; the client uses optimistic UI + socket/poll confirmation).
-- `GrpcMatchCreator` (`grpc`, and wherever Kafka is off such as prod): the legacy synchronous `Matches.CreateMatch` gRPC call, returning the server-assigned id.
+Human-vs-human and human-vs-bot creation goes through the `Queue/IMatchCreator` seam, whose sole
+implementation is `KafkaMatchCreator`: it mints the `match_id`, publishes a `CreateMatchCommand` to
+`match.commands.v1` (raw Protobuf, fire-and-forget), and returns the minted id immediately. Match
+Manager's command consumer materialises the document with that caller-minted id — so an immediate
+read of a brand-new match can briefly 404 (accepted; the client uses optimistic UI + socket/poll
+confirmation). The legacy synchronous `GrpcMatchCreator` (`Matches.CreateMatch`) and the
+`Socket:Transport` flag were removed in Kafka task 09 — creation/notification are always Kafka.
+Real-time notification likewise always goes through `KafkaMatchmakingNotifier`
+(`socket.outbound.v1` + `matchmaking.events.v1`).
 
-**Bot-vs-bot is not routed through the seam** — `QueueingService.CreateBotVsBotMatchAsync` stays on synchronous gRPC `Matches.CreateMatch` because it needs synchronous `start_fen` validation to return `invalid start_fen` to the caller. The `Matches.MatchesClient` gRPC client therefore remains wired regardless of transport.
+**Bot-vs-bot is not routed through the seam** — `QueueingService.CreateBotVsBotMatchAsync` stays on synchronous gRPC `Matches.CreateMatch` because it needs synchronous `start_fen` validation to return `invalid start_fen` to the caller. The `Matches.MatchesClient` gRPC client therefore remains wired.
 
 ## Code Style
 

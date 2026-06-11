@@ -1,16 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Confluent.Kafka;
-using Confluent.SchemaRegistry;
 using Maichess.Events.V1;
 
 namespace MaichessMatchMakerService.Queue;
 
 // Publishes the `matched` push to socket.outbound.v1 (user-targeted) and pairing
 // facts to matchmaking.events.v1, replacing the direct Socket.EmitEvent gRPC call.
-// Both topics carry Protobuf via the Confluent Protobuf serde (Kafka task 02). The
-// downstream consumers (socket-service, match-maker's own ratings topology) dual-read,
-// so the cutover is reversible.
+// Both topics carry raw Protobuf bytes (Kafka task 09 removed the Schema Registry).
 [ExcludeFromCodeCoverage]
 internal sealed class KafkaMatchmakingNotifier : IMatchmakingNotifier, IDisposable
 {
@@ -20,7 +17,6 @@ internal sealed class KafkaMatchmakingNotifier : IMatchmakingNotifier, IDisposab
 
     private readonly IProducer<string, OutboundEvent> socketProducer;
     private readonly IProducer<string, MatchmakingEvent> eventsProducer;
-    private readonly CachedSchemaRegistryClient registry;
     private readonly ILogger<KafkaMatchmakingNotifier> logger;
 
     public KafkaMatchmakingNotifier(ILogger<KafkaMatchmakingNotifier> logger)
@@ -28,16 +24,13 @@ internal sealed class KafkaMatchmakingNotifier : IMatchmakingNotifier, IDisposab
         this.logger = logger;
 
         string bootstrap = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP") ?? "kafka:9092";
-        string registryUrl = Environment.GetEnvironmentVariable("SCHEMA_REGISTRY_URL")
-            ?? "http://schema-registry:8081";
 
-        registry = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = registryUrl });
         var producerConfig = new ProducerConfig { BootstrapServers = bootstrap };
         socketProducer = new ProducerBuilder<string, OutboundEvent>(producerConfig)
-            .SetValueSerializer(ProtobufEventSerdes.Serializer<OutboundEvent>(registry))
+            .SetValueSerializer(ProtobufEventSerdes.Serializer<OutboundEvent>())
             .Build();
         eventsProducer = new ProducerBuilder<string, MatchmakingEvent>(producerConfig)
-            .SetValueSerializer(ProtobufEventSerdes.Serializer<MatchmakingEvent>(registry))
+            .SetValueSerializer(ProtobufEventSerdes.Serializer<MatchmakingEvent>())
             .Build();
     }
 
@@ -93,7 +86,6 @@ internal sealed class KafkaMatchmakingNotifier : IMatchmakingNotifier, IDisposab
         eventsProducer.Flush(TimeSpan.FromSeconds(5));
         socketProducer.Dispose();
         eventsProducer.Dispose();
-        registry.Dispose();
     }
 
 #pragma warning disable CA1031 // Fire-and-forget background publish: log and swallow all failures.

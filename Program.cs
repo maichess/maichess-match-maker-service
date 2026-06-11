@@ -12,8 +12,6 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using StackExchange.Redis;
 
-using SocketSvc = Socket.V1.Socket;
-
 DotNetEnv.Env.Load();
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -34,24 +32,12 @@ string engineUrl = builder.Configuration["Engine:Url"]
     ?? throw new InvalidOperationException("Engine:Url is not configured");
 builder.Services.AddSingleton(new Bots.BotsClient(GrpcChannel.ForAddress(engineUrl)));
 
-// gRPC client — Socket service
-string socketServiceUrl = builder.Configuration["Services:SocketService"]
-    ?? throw new InvalidOperationException("Services:SocketService is not configured");
-builder.Services.AddSingleton(new SocketSvc.SocketClient(GrpcChannel.ForAddress(socketServiceUrl)));
-
-// Real-time transport: "kafka" publishes matched/PlayersMatched to Kafka (default);
-// "grpc" falls back to the legacy Socket.EmitEvent path.
-string socketTransport = builder.Configuration["Socket:Transport"] ?? "kafka";
-if (string.Equals(socketTransport, "grpc", StringComparison.OrdinalIgnoreCase))
-{
-    builder.Services.AddSingleton<IMatchmakingNotifier, SocketNotifier>();
-    builder.Services.AddSingleton<IMatchCreator, GrpcMatchCreator>();
-}
-else
-{
-    builder.Services.AddSingleton<IMatchmakingNotifier, KafkaMatchmakingNotifier>();
-    builder.Services.AddSingleton<IMatchCreator, KafkaMatchCreator>();
-}
+// Real-time delivery and match creation always go over Kafka (socket.outbound.v1 +
+// matchmaking.events.v1, match.commands.v1); the legacy Socket.EmitEvent / synchronous
+// Matches.CreateMatch transports were removed in Kafka task 09. Bot-vs-bot creation still
+// uses the Matches gRPC client above for synchronous start_fen validation.
+builder.Services.AddSingleton<IMatchmakingNotifier, KafkaMatchmakingNotifier>();
+builder.Services.AddSingleton<IMatchCreator, KafkaMatchCreator>();
 
 // Streamiz: the single user-rating KTable + co-partitioned join, hosting skill-based
 // pairing's local rating lookups (no GetUser RPC). See caching-and-read-models.md.

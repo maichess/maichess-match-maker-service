@@ -1,6 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
 using Confluent.Kafka;
-using Confluent.SchemaRegistry;
 using Maichess.Events.V1;
 using GrpcTimeFormat = Maichess.MatchManager.V1.TimeFormat;
 
@@ -11,8 +10,7 @@ namespace MaichessMatchMakerService.Queue;
 // materialises the match document with this caller-minted id. Fire-and-forget: the minted id is
 // returned immediately so the caller (queue token / matched push) does not block on the broker.
 //
-// Serialized with Protobuf via the Confluent Protobuf serde (Kafka task 02 — match.commands.v1
-// migrated off Avro). Match Manager's consumer dual-reads, so this cutover is reversible.
+// Serialized as raw Protobuf bytes (Kafka task 09 removed the Schema Registry).
 [ExcludeFromCodeCoverage]
 internal sealed class KafkaMatchCreator : IMatchCreator, IDisposable
 {
@@ -20,7 +18,6 @@ internal sealed class KafkaMatchCreator : IMatchCreator, IDisposable
     private const string ProducerName = "match-maker-service";
 
     private readonly IProducer<string, MatchCommand> producer;
-    private readonly CachedSchemaRegistryClient registry;
     private readonly ILogger<KafkaMatchCreator> logger;
 
     public KafkaMatchCreator(ILogger<KafkaMatchCreator> logger)
@@ -28,13 +25,10 @@ internal sealed class KafkaMatchCreator : IMatchCreator, IDisposable
         this.logger = logger;
 
         string bootstrap = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP") ?? "kafka:9092";
-        string registryUrl = Environment.GetEnvironmentVariable("SCHEMA_REGISTRY_URL")
-            ?? "http://schema-registry:8081";
 
-        registry = new CachedSchemaRegistryClient(new SchemaRegistryConfig { Url = registryUrl });
         producer = new ProducerBuilder<string, MatchCommand>(
                 new ProducerConfig { BootstrapServers = bootstrap })
-            .SetValueSerializer(ProtobufEventSerdes.Serializer<MatchCommand>(registry))
+            .SetValueSerializer(ProtobufEventSerdes.Serializer<MatchCommand>())
             .Build();
     }
 
@@ -79,7 +73,6 @@ internal sealed class KafkaMatchCreator : IMatchCreator, IDisposable
     {
         producer.Flush(TimeSpan.FromSeconds(5));
         producer.Dispose();
-        registry.Dispose();
     }
 
     private static Player ToPlayer(CommandPlayer player) =>

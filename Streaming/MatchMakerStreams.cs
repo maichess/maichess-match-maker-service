@@ -20,8 +20,6 @@ internal sealed class MatchMakerStreams : BackgroundService, IUserRatingStore
     {
         string bootstrap = configuration["Kafka:BootstrapServers"]
             ?? Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP") ?? "kafka:9092";
-        string registryUrl = configuration["Kafka:SchemaRegistryUrl"]
-            ?? Environment.GetEnvironmentVariable("SCHEMA_REGISTRY_URL") ?? "http://schema-registry:8081";
         string stateDir = configuration["Kafka:StateDir"]
             ?? Environment.GetEnvironmentVariable("STREAMIZ_STATE_DIR") ?? "/var/lib/match-maker/streamiz";
 
@@ -29,7 +27,6 @@ internal sealed class MatchMakerStreams : BackgroundService, IUserRatingStore
         {
             ApplicationId = "match-maker-user-ratings",
             BootstrapServers = bootstrap,
-            SchemaRegistryUrl = registryUrl,
             StateDir = stateDir,
         };
 

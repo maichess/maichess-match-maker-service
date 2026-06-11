@@ -10,7 +10,12 @@ internal sealed class QueueingService(
     IMatchmakingNotifier socketNotifier)
 {
     internal async Task<EnqueueResult> EnqueueAsync(
-        string userId, string timeFormatId, string opponentType, string? botId, CancellationToken ct)
+        string userId,
+        string timeFormatId,
+        string opponentType,
+        string? botId,
+        bool allowFlagged,
+        CancellationToken ct)
     {
         if (!TimeFormatRegistry.IsKnown(timeFormatId))
         {
@@ -48,7 +53,7 @@ internal sealed class QueueingService(
             return new EnqueueResult.Success(queueToken, matchId);
         }
 
-        await queue.EnqueueAsync(queueToken, userId, timeFormatId);
+        await queue.EnqueueAsync(queueToken, userId, timeFormatId, allowFlagged);
         return new EnqueueResult.Success(queueToken);
     }
 

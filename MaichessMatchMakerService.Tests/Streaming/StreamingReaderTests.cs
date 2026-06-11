@@ -21,7 +21,7 @@ public sealed class StreamingReaderTests
     [Fact]
     public void Apply_NonRatingEvent_LeavesStateUntouched()
     {
-        var current = new UserRatingState(1500, 80, false, true);
+        var current = new UserRatingState(1500, 80, true);
 
         UserRatingState result = UserEventReader.Apply(current, ProtoTestData.UserRegistered("u1", "alice"));
 
@@ -31,7 +31,7 @@ public sealed class StreamingReaderTests
     [Fact]
     public void Apply_EnvelopeWithoutPayload_LeavesStateUntouched()
     {
-        var current = new UserRatingState(1500, 80, false, true);
+        var current = new UserRatingState(1500, 80, true);
 
         Assert.Equal(current, UserEventReader.Apply(current, ProtoTestData.NoPayloadUserEvent()));
     }
@@ -46,7 +46,7 @@ public sealed class StreamingReaderTests
     [Fact]
     public void Enrich_CopiesEnqueueFieldsAndRating()
     {
-        var rating = new UserRatingState(1320, 70, true, true);
+        var rating = new UserRatingState(1320, 70, true);
 
         SkillEnrichedEnqueue enriched = EnqueueReader.Enrich(ProtoTestData.PlayerEnqueued("u9", "tok-9", "10+0"), rating);
 
@@ -54,6 +54,5 @@ public sealed class StreamingReaderTests
         Assert.Equal("tok-9", enriched.QueueToken);
         Assert.Equal("10+0", enriched.TimeFormatId);
         Assert.Equal(1320, enriched.Rating);
-        Assert.True(enriched.Flagged);
     }
 }

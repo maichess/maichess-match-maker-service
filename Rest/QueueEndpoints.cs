@@ -49,7 +49,7 @@ internal static class QueueEndpoints
         }
 
         EnqueueResult result = await service.EnqueueAsync(
-            userId, body.TimeFormatId, body.Opponent.Type, body.Opponent.BotId, ct);
+            userId, body.TimeFormatId, body.Opponent.Type, body.Opponent.BotId, body.AllowFlagged ?? false, ct);
 
         return result switch
         {

@@ -19,7 +19,6 @@ internal static class EnqueueReader
             payload.PlayerId,
             payload.QueueToken,
             payload.TimeFormatId,
-            rating.Rating,
-            rating.Flagged);
+            rating.Rating);
     }
 }

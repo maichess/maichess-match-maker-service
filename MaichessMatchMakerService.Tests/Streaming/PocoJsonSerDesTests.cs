@@ -14,7 +14,7 @@ public sealed class PocoJsonSerDesTests
     [Fact]
     public void RoundTripsValue()
     {
-        var value = new UserRatingState(1530.5, 88.0, true, true);
+        var value = new UserRatingState(1530.5, 88.0, true);
 
         byte[] bytes = serdes.Serialize(value, Ctx);
         UserRatingState back = serdes.Deserialize(bytes, Ctx);
@@ -44,7 +44,7 @@ public sealed class PocoJsonSerDesTests
     [Fact]
     public void ObjectMethods_DelegateToTyped()
     {
-        var value = new UserRatingState(1200, 60, false, true);
+        var value = new UserRatingState(1200, 60, true);
 
         byte[] bytes = serdes.SerializeObject(value, Ctx);
 

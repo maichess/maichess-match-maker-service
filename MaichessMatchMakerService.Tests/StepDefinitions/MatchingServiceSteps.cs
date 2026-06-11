@@ -94,7 +94,9 @@ internal sealed class MatchingServiceSteps(MatchingServiceContext context)
     [Then(@"no dequeue is attempted")]
     public async Task ThenNoDequeueAttempted()
     {
-        await context.Queue.DidNotReceive().DequeueOldestPairAsync(Arg.Any<string>());
+        await context.Queue.DidNotReceive().GetWaitingPlayersAsync(Arg.Any<string>());
+        await context.Queue.DidNotReceive().DequeueSpecificPairAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Then(@"no exception is thrown")]

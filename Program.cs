@@ -32,6 +32,12 @@ string engineUrl = builder.Configuration["Engine:Url"]
     ?? throw new InvalidOperationException("Engine:Url is not configured");
 builder.Services.AddSingleton(new Bots.BotsClient(GrpcChannel.ForAddress(engineUrl)));
 
+// The engine's bot roster is static between deploys, so it is cached (10-min TTL) to
+// drop the per-request ListBots gRPC roundtrip on the bot-list and bot-vs-bot creation
+// paths. See caching-and-read-models.md (ListBots cache).
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<BotRosterCache>();
+
 // Real-time delivery and match creation always go over Kafka (socket.outbound.v1 +
 // matchmaking.events.v1, match.commands.v1); the legacy Socket.EmitEvent / synchronous
 // Matches.CreateMatch transports were removed in Kafka task 09. Bot-vs-bot creation still

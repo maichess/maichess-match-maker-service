@@ -23,11 +23,12 @@ internal static class QueueEndpoints
         return routes;
     }
 
-    private static async Task<IResult> GetBots(Bots.BotsClient botsClient, CancellationToken ct)
+    private static async Task<IResult> GetBots(BotRosterCache roster, CancellationToken ct)
     {
-        ListBotsResponse response = await botsClient.ListBotsAsync(new ListBotsRequest(), cancellationToken: ct);
-        IReadOnlyList<BotResponse> bots = [.. response.Bots.Select(b => new BotResponse(b.Id, b.Name, b.Elo, b.Description))];
-        return Results.Ok(new BotsListResponse(bots));
+        IReadOnlyList<Bot> bots = await roster.GetBotsAsync(ct);
+        IReadOnlyList<BotResponse> responses =
+            [.. bots.Select(b => new BotResponse(b.Id, b.Name, b.Elo, b.Description))];
+        return Results.Ok(new BotsListResponse(responses));
     }
 
     private static IResult GetTimeFormats()
@@ -84,7 +85,7 @@ internal static class QueueEndpoints
         [FromBody] BotMatchRequest body,
         ClaimsPrincipal principal,
         QueueingService service,
-        Bots.BotsClient botsClient,
+        BotRosterCache roster,
         CancellationToken ct)
     {
         if (!TryGetUserId(principal, out string userId))
@@ -92,8 +93,8 @@ internal static class QueueEndpoints
             return Results.Unauthorized();
         }
 
-        ListBotsResponse bots = await botsClient.ListBotsAsync(new ListBotsRequest(), cancellationToken: ct);
-        HashSet<string> known = [.. bots.Bots.Select(b => b.Id)];
+        IReadOnlyList<Bot> bots = await roster.GetBotsAsync(ct);
+        HashSet<string> known = [.. bots.Select(b => b.Id)];
         if (!known.Contains(body.WhiteBotId) || !known.Contains(body.BlackBotId))
         {
             return Results.BadRequest(new ErrorResponse("unknown bot_id"));

@@ -50,6 +50,16 @@ Two keys per queued player:
 - **Anti-cheat toggle (`allow_flagged`):** `POST /queue` accepts a per-search `allow_flagged` (default `false` = disallow). A pair is admissible only when neither side is flagged from the other's perspective (`MatchingService.IsAdmissible`): a flagged player needs the opponent's `allow_flagged`, in both directions. Applied in *both* the skill and FIFO paths. Flag state is read locally from `Streaming/CheatFlagStore` (an `ICheatFlagStore` materialised from the compacted `cheat.events.v1` topic by `Streaming/CheatFlagConsumer`, pure fold `Streaming/CheatFlagProjection` — only `PlayerFlagged`/`PlayerUnflagged` count, the advisory `LiveSuspicionRaised` is ignored). It's a matchmaking *filter*, not a ban. See `maichess-knowledge-base/knowledge/services/anticheat-service.md`.
 - Bot matches skip the queue entirely: create the match immediately and return `match_id` directly in the `POST /queue` response.
 
+## Bot roster cache (caching task 17)
+
+The engine's bot list is static between deploys, so `Queue/BotRosterCache` caches it behind a
+10-minute `IMemoryCache` entry (key `engine:bots`, same key as match-manager — separate process,
+separate cache) to drop the per-request `ListBots` gRPC roundtrip. The `GET /bots` listing and the
+`POST /matches/bot-vs-bot` bot-id validation in `QueueEndpoints` consult `BotRosterCache.GetBotsAsync`
+instead of calling `Bots.BotsClient` directly. `AddMemoryCache()` is wired in `Program.cs`. The
+cache helper is unit-tested (hit/miss/expiry); the thin endpoint adapter stays coverage-excluded.
+See `maichess-knowledge-base/knowledge/architecture/caching-and-read-models.md` (ListBots cache).
+
 ## Match creation transport (`IMatchCreator`)
 
 Human-vs-human and human-vs-bot creation goes through the `Queue/IMatchCreator` seam, whose sole

@@ -8,7 +8,8 @@ internal sealed class QueueRepository(IConnectionMultiplexer redis) : IQueueRepo
 {
     private IDatabase Db => redis.GetDatabase();
 
-    public async Task EnqueueAsync(string queueToken, string userId, string timeFormatId, bool allowFlagged)
+    public async Task EnqueueAsync(
+        string queueToken, string userId, string timeFormatId, bool allowFlagged, ColorPreference colorPreference)
     {
         double score = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
@@ -20,6 +21,7 @@ internal sealed class QueueRepository(IConnectionMultiplexer redis) : IQueueRepo
                 new HashEntry("time_format_id", timeFormatId),
                 new HashEntry("status", "waiting"),
                 new HashEntry("allow_flagged", allowFlagged ? "true" : "false"),
+                new HashEntry("color_preference", ColorPreferenceParser.ToWire(colorPreference)),
             ]);
         _ = tx.SortedSetAddAsync(QueueKey(timeFormatId), queueToken, score);
         _ = tx.StringSetAsync(UserKey(userId), queueToken);
@@ -127,12 +129,15 @@ internal sealed class QueueRepository(IConnectionMultiplexer redis) : IQueueRepo
             f => (string)f.Name!,
             f => (string?)f.Value);
 
+        _ = ColorPreferenceParser.TryParse(dict.GetValueOrDefault("color_preference"), out ColorPreference color);
+
         return new QueueEntry(
             queueToken,
             dict.GetValueOrDefault("user_id") ?? string.Empty,
             dict.GetValueOrDefault("time_format_id") ?? string.Empty,
             dict.GetValueOrDefault("status") == "matched" ? QueueStatus.Matched : QueueStatus.Waiting,
             dict.GetValueOrDefault("match_id"),
-            dict.GetValueOrDefault("allow_flagged") == "true");
+            dict.GetValueOrDefault("allow_flagged") == "true",
+            color);
     }
 }

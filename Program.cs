@@ -58,6 +58,9 @@ builder.Services.AddSingleton<CheatFlagStore>();
 builder.Services.AddSingleton<ICheatFlagStore>(sp => sp.GetRequiredService<CheatFlagStore>());
 builder.Services.AddHostedService<CheatFlagConsumer>();
 
+// Coin flip for ambiguous color assignment (same-fixed-color clash, vs-bot "random").
+builder.Services.AddSingleton<IColorRandom, DefaultColorRandom>();
+
 // Queue service and background matching worker
 builder.Services.AddSingleton<QueueingService>();
 builder.Services.AddSingleton<MatchingService>();

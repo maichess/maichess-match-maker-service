@@ -2,7 +2,8 @@ namespace MaichessMatchMakerService.Queue;
 
 internal interface IQueueRepository
 {
-    Task EnqueueAsync(string queueToken, string userId, string timeFormatId, bool allowFlagged);
+    Task EnqueueAsync(
+        string queueToken, string userId, string timeFormatId, bool allowFlagged, ColorPreference colorPreference);
 
     Task EnqueueBotMatchAsync(string queueToken, string userId, string timeFormatId, string matchId);
 

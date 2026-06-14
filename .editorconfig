@@ -140,6 +140,10 @@ dotnet_diagnostic.SA1601.severity = none
 dotnet_diagnostic.SA1602.severity = none
 dotnet_diagnostic.SA1633.severity = none
 
+# CA5394: System.Random is fine here — the color coin flip is a game mechanic, not
+# security-sensitive, and a seedable RNG is required for deterministic tests.
+dotnet_diagnostic.CA5394.severity = none
+
 [*.{csproj,props,targets}]
 indent_size = 2
 

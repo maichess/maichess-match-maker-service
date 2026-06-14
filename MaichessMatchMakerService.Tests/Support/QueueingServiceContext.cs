@@ -16,6 +16,8 @@ internal sealed class QueueingServiceContext
 
     internal IMatchmakingNotifier Notifier { get; } = Substitute.For<IMatchmakingNotifier>();
 
+    internal FakeColorRandom ColorRandom { get; } = new FakeColorRandom();
+
     internal QueueingService Service { get; }
 
     internal EnqueueResult? EnqueueResult { get; set; }
@@ -30,7 +32,7 @@ internal sealed class QueueingServiceContext
 
     internal QueueingServiceContext()
     {
-        Service = new QueueingService(Queue, Creator, MatchesClient, Notifier);
+        Service = new QueueingService(Queue, Creator, MatchesClient, Notifier, ColorRandom);
     }
 
     internal void SetupUserNotInQueue(string userId)

@@ -7,7 +7,8 @@ internal sealed class QueueingService(
     IQueueRepository queue,
     IMatchCreator matchCreator,
     Matches.MatchesClient matchesClient,
-    IMatchmakingNotifier socketNotifier)
+    IMatchmakingNotifier socketNotifier,
+    IColorRandom colorRandom)
 {
     internal async Task<EnqueueResult> EnqueueAsync(
         string userId,
@@ -15,6 +16,7 @@ internal sealed class QueueingService(
         string opponentType,
         string? botId,
         bool allowFlagged,
+        string? colorPreference,
         CancellationToken ct)
     {
         if (!TimeFormatRegistry.IsKnown(timeFormatId))
@@ -32,6 +34,11 @@ internal sealed class QueueingService(
             return new EnqueueResult.InvalidInput("opponent.bot_id is required for bot matches");
         }
 
+        if (!ColorPreferenceParser.TryParse(colorPreference, out ColorPreference color))
+        {
+            return new EnqueueResult.InvalidInput("color_preference must be 'white', 'black', 'any', or 'random'");
+        }
+
         string? existingToken = await queue.GetUserQueueTokenAsync(userId);
         if (existingToken is not null)
         {
@@ -42,9 +49,14 @@ internal sealed class QueueingService(
 
         if (opponentType == "bot")
         {
+            // The human's chosen side fixes the slots directly; ANY/"random" flips a coin.
+            bool humanWhite = ColorAssignment.HumanIsWhite(color, colorRandom.NextWhite());
+            CommandPlayer human = new(userId, null);
+            CommandPlayer bot = new(null, botId);
+
             string matchId = await matchCreator.CreateMatchAsync(
-                new CommandPlayer(userId, null),
-                new CommandPlayer(null, botId),
+                humanWhite ? human : bot,
+                humanWhite ? bot : human,
                 timeFormatId,
                 ct);
 
@@ -53,7 +65,7 @@ internal sealed class QueueingService(
             return new EnqueueResult.Success(queueToken, matchId);
         }
 
-        await queue.EnqueueAsync(queueToken, userId, timeFormatId, allowFlagged);
+        await queue.EnqueueAsync(queueToken, userId, timeFormatId, allowFlagged, color);
         return new EnqueueResult.Success(queueToken);
     }
 

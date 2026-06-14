@@ -17,6 +17,8 @@ internal sealed class MatchingServiceContext
 
     internal CheatFlagStore CheatFlags { get; } = new CheatFlagStore();
 
+    internal FakeColorRandom ColorRandom { get; } = new FakeColorRandom();
+
     internal FakeLogger<MatchingService> Logger { get; } = new FakeLogger<MatchingService>();
 
     internal MatchingService MatchingService { get; }
@@ -29,7 +31,7 @@ internal sealed class MatchingServiceContext
 
     internal MatchingServiceContext()
     {
-        MatchingService = new MatchingService(Queue, Creator, Notifier, RatingStore, CheatFlags, Logger);
+        MatchingService = new MatchingService(Queue, Creator, Notifier, RatingStore, CheatFlags, ColorRandom, Logger);
 
         Queue.GetWaitingPlayersAsync(Arg.Any<string>())
             .Returns(Task.FromResult<IReadOnlyList<(string Token, string UserId, bool AllowFlagged)>>([]));
@@ -108,6 +110,12 @@ internal sealed class MatchingServiceContext
     {
         Queue.GetEntryAsync(token).Returns(Task.FromResult<QueueEntry?>(
             new QueueEntry(token, userId, CurrentTimeFormatId ?? "5+0", QueueStatus.Waiting, null)));
+    }
+
+    internal void SetupEntry(string token, string userId, ColorPreference color)
+    {
+        Queue.GetEntryAsync(token).Returns(Task.FromResult<QueueEntry?>(
+            new QueueEntry(token, userId, CurrentTimeFormatId ?? "5+0", QueueStatus.Waiting, null, ColorPreference: color)));
     }
 
     internal void SetupEntryMissing(string token)

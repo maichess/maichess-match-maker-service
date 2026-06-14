@@ -8,6 +8,7 @@ internal sealed class MatchingService(
     IMatchmakingNotifier socketNotifier,
     IUserRatingStore ratingStore,
     ICheatFlagStore cheatFlags,
+    IColorRandom colorRandom,
     ILogger<MatchingService> logger)
 {
     // Once a time-control pool reaches this many waiting players, pair by closest live
@@ -80,17 +81,24 @@ internal sealed class MatchingService(
             return;
         }
 
-        QueueEntry? white = await queue.GetEntryAsync(tokens[0]);
-        QueueEntry? black = await queue.GetEntryAsync(tokens[1]);
+        QueueEntry? first = await queue.GetEntryAsync(tokens[0]);
+        QueueEntry? second = await queue.GetEntryAsync(tokens[1]);
 
-        if (white is null || black is null)
+        if (first is null || second is null)
         {
             logger.LogWarning(
-                "Queue entry missing during matching — tokens: {White}, {Black}",
+                "Queue entry missing during matching — tokens: {First}, {Second}",
                 tokens[0],
                 tokens[1]);
             return;
         }
+
+        // The pair is already fixed; color preferences only decide which side each takes.
+        // A same-fixed-color clash defers to the coin flip (see ColorAssignment).
+        bool firstWhite = ColorAssignment.FirstIsWhite(
+            first.ColorPreference, second.ColorPreference, colorRandom.NextWhite());
+        QueueEntry white = firstWhite ? first : second;
+        QueueEntry black = firstWhite ? second : first;
 
         socketNotifier.PlayersMatched(white.UserId, black.UserId, timeFormatId);
 
@@ -102,8 +110,8 @@ internal sealed class MatchingService(
                 timeFormatId,
                 ct);
 
-            await queue.MarkMatchedAsync(tokens[0], white.UserId, matchId);
-            await queue.MarkMatchedAsync(tokens[1], black.UserId, matchId);
+            await queue.MarkMatchedAsync(white.QueueToken, white.UserId, matchId);
+            await queue.MarkMatchedAsync(black.QueueToken, black.UserId, matchId);
 
             socketNotifier.NotifyMatched(white.UserId, matchId);
             socketNotifier.NotifyMatched(black.UserId, matchId);

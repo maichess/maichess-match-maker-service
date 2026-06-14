@@ -49,6 +49,20 @@ Two keys per queued player:
 - When the queue for a given time control has ≥ 10 waiting players, pair by closest ELO; otherwise pair by longest wait (FIFO). Live ratings come from the **Streamiz user-ratings KTable** (`Streaming/`, fed by `user.events.v1`), read locally via interactive queries (`IUserRatingStore`) — no `GetUser` RPC. `MatchingService.ClosestRatedPair` picks the minimum-gap *admissible* pair; unrated players are excluded and a lost race (`DequeueSpecificPairAsync` returns false) re-reads the waiting list and falls back to FIFO (`OldestAdmissiblePair`). See `maichess-knowledge-base/caching-and-read-models.md` (Stage 3) and `README.md`.
 - **Anti-cheat toggle (`allow_flagged`):** `POST /queue` accepts a per-search `allow_flagged` (default `false` = disallow). A pair is admissible only when neither side is flagged from the other's perspective (`MatchingService.IsAdmissible`): a flagged player needs the opponent's `allow_flagged`, in both directions. Applied in *both* the skill and FIFO paths. Flag state is read locally from `Streaming/CheatFlagStore` (an `ICheatFlagStore` materialised from the compacted `cheat.events.v1` topic by `Streaming/CheatFlagConsumer`, pure fold `Streaming/CheatFlagProjection` — only `PlayerFlagged`/`PlayerUnflagged` count, the advisory `LiveSuspicionRaised` is ignored). It's a matchmaking *filter*, not a ban. See `maichess-knowledge-base/knowledge/services/anticheat-service.md`.
 - Bot matches skip the queue entirely: create the match immediately and return `match_id` directly in the `POST /queue` response.
+- **Color preference (`color_preference`, task 21):** `POST /queue` accepts a per-search
+  `color_preference` (`white` | `black` | `any` default; `random` is a vs-bot synonym for
+  `any`). It is resolved **entirely inside this service** — colors are decided before the
+  match is created, so no proto/contract version bump was needed (REST-only change). The
+  parse + assignment logic is pure and unit-tested: `Queue/ColorPreferenceParser`,
+  `Queue/ColorAssignment` (`FirstIsWhite` for the human queue, `HumanIsWhite` for vs-bot),
+  with the coin flip behind `Queue/IColorRandom` (`DefaultColorRandom`) for determinism.
+  Preference never affects *admissibility* (time control / skill / anti-cheat decide who
+  pairs) — only which side each player takes once paired: opposite fixed colors each get
+  their wish, one-fixed-vs-`any` honours the fixed side, both-`any` keeps the longest-waiting
+  player on White (prior behaviour), and a same-fixed-color clash is still pairable with a
+  coin flip deciding who concedes. `QueueEntry.ColorPreference` rides the Redis hash
+  (`color_preference`); the vs-bot path swaps the human into the chosen slot before
+  `CreateMatchAsync`.
 
 ## Bot roster cache (caching task 17)
 
